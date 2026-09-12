@@ -1,0 +1,8 @@
+node_modules/
+.next/
+out/
+.wrangler/
+.env*
+*.log
+.DS_Store
+.claude/launch.json

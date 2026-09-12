@@ -1,0 +1,10 @@
+{
+  "name": "mirsal",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev --prefix apps/web",
+    "build": "npm run build --prefix apps/web",
+    "deploy": "npm run deploy --prefix apps/web"
+  }
+}
