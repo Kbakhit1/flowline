@@ -40,7 +40,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* Mirsal semantic colors: stage + flags */
+  /* FlowLine semantic colors: stage + flags */
   --color-stage-you: var(--stage-you);
   --color-stage-you-soft: var(--stage-you-soft);
   --color-stage-wait: var(--stage-wait);

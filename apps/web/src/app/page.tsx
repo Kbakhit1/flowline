@@ -7,7 +7,7 @@ import { useEngine } from "@/lib/engine/store";
 import { useT } from "@/lib/i18n";
 import { useHydrated } from "@/components/providers";
 import { LangToggle, PersonAvatar, StageChip, ThemeToggle } from "@/components/common";
-import { Logo } from "@/components/logo";
+import { LogoLockup } from "@/components/logo";
 
 const PERSONAS = ["u2", "u6", "u3", "u7", "u1"] as const;
 
@@ -29,10 +29,7 @@ export default function Landing() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-5 py-6 sm:px-8">
       <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Logo />
-          <span className="text-lg font-bold">{t.app.name}</span>
-        </div>
+        <LogoLockup height={30} />
         <div className="flex items-center gap-1">
           <LangToggle />
           <ThemeToggle />

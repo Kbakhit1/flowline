@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "cn";
-import { ArrowDown, ArrowUp, ArrowLeftRight, CalendarDays, ChevronDown, CornerDownLeft, Flame, MessageSquareQuote, SendHorizontal, Tag, UserRound } from "lucide-react";
-import type { CompanySettings, FieldDef, Priority, RequestType, User } from "@/lib/engine/types";
+import { ArrowDown, ArrowUp, ArrowLeftRight, CalendarDays, CornerDownLeft, Flame, MessageSquareQuote, SendHorizontal } from "lucide-react";
+import type { CompanySettings, FieldDef, Priority } from "@/lib/engine/types";
 import { addDeadlineDays, directionOf, resolveFirstRecipient } from "@/lib/engine/rules";
 import { useEngine, selectMe, type ComposerDraft } from "@/lib/engine/store";
 import { usePeople, useIsDesktop } from "@/lib/engine/hooks";
@@ -11,9 +11,8 @@ import { useT, useFmt, useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { PersonAvatar } from "@/components/common";
+import { Chip, PersonPicker, TypePicker } from "@/components/bubbles/pickers";
 
 function emptyDraft(projectId: string): ComposerDraft {
   return {
@@ -190,97 +189,6 @@ export function Composer({
 }
 
 /* ---------- pieces ---------- */
-
-function Chip({
-  children,
-  active,
-  activeClass,
-  onClick,
-  className,
-  ...rest
-}: React.ComponentProps<"button"> & { active?: boolean; activeClass?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex h-7 max-w-[200px] items-center gap-1 rounded-full border px-2.5 text-xs font-medium whitespace-nowrap transition-colors hover:bg-muted",
-        active ? activeClass : "border-border text-foreground/80",
-        className,
-      )}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PersonPicker({ people, value, onChange }: { people: ReturnType<typeof usePeople>; value: User | null; onChange: (u: User) => void }) {
-  const { t, tl } = useT();
-  const [open, setOpen] = useState(false);
-  const groups: { label: string; list: User[] }[] = [
-    { label: t.inbox.myTeam, list: people.team },
-    { label: t.inbox.myManager, list: people.manager ? [people.manager] : [] },
-    { label: t.inbox.others, list: people.others },
-  ].filter((g) => g.list.length);
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={<Chip active={!!value} activeClass="border-primary/40 bg-primary/5 text-primary" />}>
-        {value ? <PersonAvatar user={value} size={18} /> : <UserRound className="size-3.5" />}
-        <span className="truncate">{value ? tl(value.name) : t.inbox.pickPerson}</span>
-        <ChevronDown className="size-3 opacity-60" />
-      </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-[60vh] w-72 overflow-y-auto p-1.5 thin-scroll">
-        {groups.map((g) => (
-          <div key={g.label} className="mb-1">
-            <div className="px-2 py-1 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">{g.label}</div>
-            {g.list.map((u) => (
-              <button
-                key={u.id}
-                onClick={() => {
-                  onChange(u);
-                  setOpen(false);
-                }}
-                className={cn("flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start hover:bg-muted", value?.id === u.id && "bg-accent")}
-              >
-                <PersonAvatar user={u} size={24} />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm">{tl(u.name)}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">{tl(u.title)}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        ))}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function TypePicker({ types, value, onChange }: { types: RequestType[]; value: RequestType; onChange: (t: RequestType) => void }) {
-  const { t, tl } = useT();
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Chip active={value.id !== "t_task"} activeClass="border-primary/40 bg-primary/5 text-primary" />}>
-        <Tag className="size-3.5" />
-        {tl(value.name)}
-        <ChevronDown className="size-3 opacity-60" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        {types.map((ty) => (
-          <DropdownMenuItem key={ty.id} onClick={() => onChange(ty)} className={cn(ty.id === value.id && "bg-accent")}>
-            <span className="flex flex-col">
-              <span>{tl(ty.name)}</span>
-              <span className="text-[10px] text-muted-foreground">
-                {ty.routing.approval === "none" ? t.inbox.goesDirect : t.inbox.needsApproval}
-              </span>
-            </span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 function DeadlinePicker({
   value,

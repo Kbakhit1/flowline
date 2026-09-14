@@ -8,7 +8,7 @@ import { useEngine, selectMe, selectUnreadCount } from "@/lib/engine/store";
 import { useT } from "@/lib/i18n";
 import { useHydrated } from "@/components/providers";
 import { LangToggle, PersonAvatar, ThemeToggle } from "@/components/common";
-import { Logo } from "@/components/logo";
+import { Logo, LogoLockup } from "@/components/logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,9 +50,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-1">
       {/* desktop sidebar */}
       <aside className="hidden w-60 shrink-0 flex-col border-e bg-sidebar md:flex">
-        <div className="flex h-14 items-center gap-2 px-4">
-          <Logo />
-          <span className="text-base font-bold">{t.app.name}</span>
+        <div className="flex h-14 items-center px-4">
+          <LogoLockup height={26} />
         </div>
         <nav className="flex flex-col gap-0.5 px-2">
           {NAV.map((n) => (

@@ -1,7 +1,11 @@
-# مِرسال · Mirsal
+# فلو لاين · FlowLine
 
 ديمو تفاعلي لنظام إدارة الطلبات على الهيكل الوظيفي (مشروع كيوب لاين).
 كل طلب في الشركة "فقاعة" واحدة: تنزل للفريق، وترجع بخبر.
+
+## الهوية
+
+الشعار والألوان والخطوط في `apps/web/public/brand/` (صفحة الهوية: `/brand/`)، والملخص في [BRAND.md](BRAND.md).
 
 ## تشغيل
 
@@ -15,9 +19,9 @@ npm run deploy       # next build + wrangler deploy (محتاج حساب Cloudfl
 ## الديمو أونلاين
 
 GitHub Pages بيبني الديمو تلقائياً مع كل push على `main`:
-https://kbakhit1.github.io/mirsal/
+https://kbakhit1.github.io/flowline/
 
-(الـ workflow في `.github/workflows/pages.yml`، والمسار `/mirsal` بيتظبط بـ `NEXT_PUBLIC_BASE_PATH`.)
+(الـ workflow في `.github/workflows/pages.yml`، والمسار `/flowline` بيتظبط بـ `NEXT_PUBLIC_BASE_PATH`.)
 
 ## الشكل العام
 

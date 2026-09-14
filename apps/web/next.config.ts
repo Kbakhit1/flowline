@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// GitHub Pages serves the demo under /mirsal; Cloudflare serves it at the root.
+// GitHub Pages serves the demo under /flowline; Cloudflare serves it at the root.
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const nextConfig: NextConfig = {

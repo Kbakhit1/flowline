@@ -20,10 +20,10 @@ const mono = IBM_Plex_Mono({
 const bp = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title: "مِرسال · Mirsal",
+  title: "FlowLine · فلو لاين",
   description: "كل طلب في الشركة فقاعة واحدة. تنزل للفريق، وترجع بخبر.",
   manifest: `${bp}/manifest.webmanifest`,
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Mirsal" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "FlowLine" },
   icons: { icon: `${bp}/icon.svg`, apple: `${bp}/icon.svg` },
 };
 

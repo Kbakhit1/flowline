@@ -7,6 +7,7 @@ import type {
   AuditEntry,
   CompanySettings,
   DbSnapshot,
+  FieldKind,
   L,
   Message,
   Notification,
@@ -16,6 +17,7 @@ import type {
   Request,
   RequestLine,
   RequestStatus,
+  RoleKey,
   User,
 } from "./types";
 import { buildSeed, SEED_VERSION } from "./seed";
@@ -106,7 +108,25 @@ export interface EngineState {
 
   // admin
   updateSettings: (patch: Partial<CompanySettings>) => void;
+  addUser: (input: NewUserInput) => string;
+  addRequestType: (input: NewTypeInput) => string;
   resetDemo: () => void;
+}
+
+export interface NewUserInput {
+  name: string;
+  title: string;
+  departmentId: string;
+  managerId: string | null;
+  role: RoleKey;
+}
+
+export interface NewTypeInput {
+  name: string;
+  approval: "none" | "project_manager";
+  defaultDeadlineDays: number;
+  hasLines: boolean;
+  fields: { label: string; kind: FieldKind; options: string[] }[];
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -584,11 +604,62 @@ export const useEngine = create<EngineState>()(
             db.company = { ...db.company, settings: { ...db.company.settings, ...p } };
           }),
 
+        addUser: (input) => {
+          const id = `u_${uid()}`;
+          mutate((db) => {
+            const u: User = {
+              id,
+              companyId: db.company.id,
+              name: same(input.name.trim()),
+              title: same(input.title.trim()),
+              departmentId: input.departmentId,
+              managerId: input.managerId,
+              role: input.role,
+              hue: Math.floor(Math.random() * 360),
+              active: true,
+            };
+            db.users = [...db.users, u];
+            const pid = get().session.projectId;
+            db.projects = db.projects.map((p) => (p.id === pid ? { ...p, memberIds: [...p.memberIds, id] } : p));
+          });
+          return id;
+        },
+
+        addRequestType: (input) => {
+          const id = `t_${uid()}`;
+          mutate((db) => {
+            db.requestTypes = [
+              ...db.requestTypes,
+              {
+                id,
+                companyId: db.company.id,
+                name: same(input.name.trim()),
+                fields: input.fields
+                  .filter((f) => f.label.trim())
+                  .map((f, i) => ({
+                    key: `f${i + 1}`,
+                    label: same(f.label.trim()),
+                    kind: f.kind,
+                    options: f.kind === "select" ? f.options.map((o) => same(o.trim())).filter((o) => o.ar) : undefined,
+                  })),
+                routing: {
+                  firstRecipient: { kind: "chosen" },
+                  approval: input.approval,
+                  defaultDeadlineDays: Math.max(1, input.defaultDeadlineDays || 3),
+                  requiredAttachments: [],
+                  hasLines: input.hasLines,
+                },
+              },
+            ];
+          });
+          return id;
+        },
+
         resetDemo: () => set({ ...fresh() }),
       };
     },
     {
-      name: "mirsal-demo",
+      name: "flowline-demo",
       version: SEED_VERSION,
       // an older seed on the device is simply replaced
       migrate: () => fresh() as unknown as EngineState,

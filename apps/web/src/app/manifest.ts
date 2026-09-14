@@ -6,8 +6,8 @@ const bp = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "مِرسال · Mirsal",
-    short_name: "Mirsal",
+    name: "FlowLine · فلو لاين",
+    short_name: "FlowLine",
     description: "كل طلب في الشركة فقاعة واحدة. تنزل للفريق، وترجع بخبر.",
     start_url: `${bp}/app/`,
     scope: `${bp}/`,

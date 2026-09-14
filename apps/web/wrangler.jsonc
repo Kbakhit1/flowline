@@ -1,6 +1,6 @@
 {
   // Static export served by Cloudflare Workers static assets. `npm run deploy` from apps/web.
-  "name": "mirsal-demo",
+  "name": "flowline-demo",
   "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "./out",

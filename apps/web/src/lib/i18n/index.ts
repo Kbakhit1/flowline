@@ -19,7 +19,7 @@ export const useUi = create<UiState>()(
       locale: "ar",
       setLocale: (locale) => set({ locale }),
     }),
-    { name: "mirsal-ui-v1", storage: createJSONStorage(() => localStorage), skipHydration: true },
+    { name: "flowline-ui-v1", storage: createJSONStorage(() => localStorage), skipHydration: true },
   ),
 );
 

@@ -1,5 +1,5 @@
 /* Minimal app-shell cache: the demo opens offline after the first visit. */
-const CACHE = "mirsal-demo-v1";
+const CACHE = "flowline-demo-v1";
 const SHELL = new URL("app/", self.registration.scope).href;
 self.addEventListener("install", () => {
   self.skipWaiting();

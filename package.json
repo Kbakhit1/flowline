@@ -1,5 +1,5 @@
 {
-  "name": "mirsal",
+  "name": "flowline",
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
