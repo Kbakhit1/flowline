@@ -204,6 +204,18 @@
   scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent) transparent;
 }
 
+/* Guided tour: the element the current step talks about */
+.tour-target {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 16px;
+  animation: tour-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tour-pulse {
+  0%, 100% { outline-color: var(--primary); }
+  50% { outline-color: color-mix(in oklch, var(--primary) 35%, transparent); }
+}
+
 /* Print: only the page content, on paper */
 @media print {
   @page { size: A4; margin: 12mm; }

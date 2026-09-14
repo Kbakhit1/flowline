@@ -111,7 +111,7 @@ export function Composer({
   if (!project) return <p className="rounded-2xl border border-dashed p-4 text-center text-sm text-muted-foreground">{t.landing.noProject}</p>;
 
   return (
-    <div className={cn("relative rounded-2xl border bg-card p-2.5 shadow-sm", className)}>
+    <div className={cn("relative rounded-2xl border bg-card p-2.5 shadow-sm", className)} data-tour="composer">
       {(parent || d.fromMessageId) && (
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
           {parent && (
@@ -286,7 +286,7 @@ export function ComposerSheet() {
   const locale = useLocale();
   const open = !!draft;
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && setComposer(null)}>
+    <Sheet open={open} onOpenChange={(o) => !o && setComposer(null)} modal={false}>
       <SheetContent side={desktop ? (locale === "ar" ? "left" : "right") : "bottom"} className="gap-0 overflow-y-auto p-4 sm:max-w-md">
         <SheetTitle className="mb-3 text-base">{draft?.parentId ? t.action.subrequest : t.nav.inbox}</SheetTitle>
         {draft && <Composer initial={draft} autoFocus onDone={() => setComposer(null)} />}

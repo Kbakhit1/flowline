@@ -69,6 +69,8 @@ interface Session {
   openRequestId: string | null;
   composer: ComposerDraft | null;
   treeFocusId: string | null;
+  treeView: "people" | "lines";
+  linesFocusId: string | null;
   /** demo = seeded company; blank = the training sheet built from scratch */
   mode: "demo" | "blank";
 }
@@ -84,9 +86,11 @@ export interface EngineState {
   openRequest: (id: string | null) => void;
   setComposer: (draft: ComposerDraft | null) => void;
   setTreeFocus: (id: string | null) => void;
+  setTreeView: (v: "people" | "lines") => void;
+  setLinesFocus: (id: string | null) => void;
 
   // requests
-  createRequest: (input: CreateRequestInput) => string;
+  createRequest: (input: CreateRequestInput, asUserId?: string) => string;
   approve: (id: string, note: string) => void;
   reject: (id: string, note: string) => void;
   requestClarification: (id: string, note: string) => void;
@@ -114,6 +118,7 @@ export interface EngineState {
   updateUser: (id: string, patch: { name?: string; title?: string; departmentId?: string; managerId?: string | null; role?: RoleKey }) => void;
   addUser: (input: NewUserInput) => string;
   addDepartment: (name: string, supervisorId: string) => string;
+  updateDepartment: (id: string, patch: { name?: string; supervisorId?: string }) => void;
   addProject: (input: NewProjectInput) => string;
   addRequestType: (input: NewTypeInput) => string;
   resetDemo: () => void;
@@ -159,6 +164,8 @@ function fresh(): { db: DbSnapshot; session: Session } {
       openRequestId: null,
       composer: null,
       treeFocusId: null,
+      treeView: "people",
+      linesFocusId: null,
       mode: "demo",
     },
   };
@@ -167,7 +174,7 @@ function fresh(): { db: DbSnapshot; session: Session } {
 function blank(): { db: DbSnapshot; session: Session } {
   return {
     db: buildBlank(),
-    session: { currentUserId: "owner", projectId: "", openRequestId: null, composer: null, treeFocusId: null, mode: "blank" },
+    session: { currentUserId: "owner", projectId: "", openRequestId: null, composer: null, treeFocusId: null, treeView: "people", linesFocusId: null, mode: "blank" },
   };
 }
 
@@ -295,12 +302,14 @@ export const useEngine = create<EngineState>()(
         },
         setComposer: (draft) => set((s) => ({ session: { ...s.session, composer: draft } })),
         setTreeFocus: (id) => set((s) => ({ session: { ...s.session, treeFocusId: id } })),
+        setTreeView: (v) => set((s) => ({ session: { ...s.session, treeView: v } })),
+        setLinesFocus: (id) => set((s) => ({ session: { ...s.session, linesFocusId: id } })),
 
         /* ---------- requests ---------- */
-        createRequest: (input) => {
+        createRequest: (input, asUserId) => {
           const id = uid();
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = asUserId ?? get().session.currentUserId;
             const creator = userOf(db, me)!;
             const type = db.requestTypes.find((t) => t.id === input.typeId)!;
             const project = db.projects.find((p) => p.id === input.projectId)!;
@@ -677,6 +686,15 @@ export const useEngine = create<EngineState>()(
           });
           return id;
         },
+
+        updateDepartment: (id, patch) =>
+          mutate((db) => {
+            db.departments = db.departments.map((d) =>
+              d.id === id
+                ? { ...d, ...(patch.name !== undefined ? { name: same(patch.name.trim()) } : {}), ...(patch.supervisorId !== undefined ? { supervisorId: patch.supervisorId } : {}) }
+                : d,
+            );
+          }),
 
         addProject: (input) => {
           const id = `p_${uid()}`;

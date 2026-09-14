@@ -21,7 +21,7 @@ import { Maximize2, Play } from "lucide-react";
 import type { Request, User } from "@/lib/engine/types";
 import { isLate, stageOf } from "@/lib/engine/rules";
 import { useEngine } from "@/lib/engine/store";
-import { useT, useFmt, useLocale } from "@/lib/i18n";
+import { useT, useFmt, useLocale, fill } from "@/lib/i18n";
 import { PersonAvatar, StageDot } from "@/components/common";
 
 /**
@@ -36,6 +36,8 @@ type RequestNodeData = {
   now: number;
   dim: boolean;
   selected: boolean;
+  /** the node the story player is currently on */
+  active: boolean;
   onSelect: (id: string) => void;
   onOpen: (id: string) => void;
 };
@@ -75,16 +77,16 @@ function RequestNodeView({ data }: NodeProps<RequestNode>) {
   const { t, tl, dir } = useT();
   const { fmtDue } = useFmt();
   const sides = useSides();
-  const { r, owner, now, dim, selected } = data;
+  const { r, owner, now, dim, selected, active } = data;
   const late = isLate(r, now);
   return (
     <div
       dir={dir}
-      onClick={() => data.onSelect(r.id)}
       className={cn(
         "group relative flex flex-col justify-between rounded-2xl border border-s-4 bg-card px-3 py-2 shadow-sm transition-all",
         STAGE_BORDER[stageOf(r.status)],
         selected ? "ring-2 ring-primary/40 border-primary" : "hover:border-primary/40",
+        active && "ring-4 ring-primary/50 scale-[1.03]",
         late && "bg-late-soft/40",
         dim && "opacity-25",
       )}
@@ -132,7 +134,6 @@ function StartNodeView({ data }: NodeProps<StartNode>) {
   return (
     <div dir={dir} className={cn("flex flex-col items-center gap-1 transition-opacity", dim && "opacity-25")} style={{ width: START_W }}>
       <button
-        onClick={() => data.onSelect(data.rootId)}
         className={cn(
           "relative flex size-12 items-center justify-center rounded-full border-2 bg-card shadow-sm transition-colors",
           selected ? "border-primary ring-4 ring-primary/20" : "border-border hover:border-primary/50",
@@ -155,7 +156,7 @@ const nodeTypes = { request: RequestNodeView, start: StartNodeView };
 
 /* ---------- chain math ---------- */
 
-function chainOf(requests: Request[], id: string): Set<string> {
+export function chainOf(requests: Request[], id: string): Set<string> {
   const byId = new Map(requests.map((r) => [r.id, r]));
   const out = new Set<string>();
   // up to the root
@@ -173,7 +174,7 @@ function chainOf(requests: Request[], id: string): Set<string> {
   return out;
 }
 
-function rootOf(requests: Request[], id: string): string {
+export function rootOf(requests: Request[], id: string): string {
   const byId = new Map(requests.map((r) => [r.id, r]));
   let cur = byId.get(id);
   while (cur?.parentId) cur = byId.get(cur.parentId);
@@ -211,16 +212,19 @@ function Canvas({
   requests,
   now,
   selectedId,
+  activeId,
   onSelect,
   onOpen,
 }: {
   requests: Request[];
   now: number;
   selectedId: string | null;
+  activeId: string | null;
   onSelect: (id: string | null) => void;
   onOpen: (id: string) => void;
 }) {
   const users = useEngine((s) => s.db.users);
+  const { t, tl } = useT();
   const locale = useLocale();
   const { fitView } = useReactFlow();
   const initialized = useNodesInitialized();
@@ -265,6 +269,7 @@ function Canvas({
           now,
           dim: dimNode(r.id),
           selected: selectedId === r.id,
+          active: activeId === r.id,
           onSelect: (id) => onSelect(selectedId === id ? null : id),
           onOpen,
         },
@@ -275,12 +280,15 @@ function Canvas({
     const goStroke = "var(--primary)";
     const idleStroke = "color-mix(in oklch, var(--foreground) 30%, transparent)";
     const backStroke = "var(--stage-done)";
+    const labelStyle = { fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "inherit" } as const;
+    const labelBg = { fill: "var(--card)", fillOpacity: 0.95 } as const;
     for (const r of requests) {
       const source = r.parentId ?? `start-${r.id}`;
       const inChain = lit ? lit.has(r.id) && (r.parentId ? lit.has(r.parentId) : litRoot === r.id) : false;
       const dim = !!lit && !inChain;
       const returned = r.status === "closed" || r.status === "complete";
       const stopped = r.status === "cancelled" || r.status === "rejected";
+      const owner = userOf(r.ownerId);
       edges.push({
         id: `go-${r.id}`,
         source,
@@ -288,6 +296,11 @@ function Canvas({
         target: r.id,
         targetHandle: "in",
         type: "smoothstep",
+        label: inChain && owner ? fill(t.flow.goLabel, { name: tl(owner.name) }) : undefined,
+        labelStyle,
+        labelBgStyle: labelBg,
+        labelBgPadding: [4, 2],
+        labelBgBorderRadius: 6,
         markerEnd: { type: MarkerType.ArrowClosed, color: inChain ? goStroke : idleStroke, width: 14, height: 14 },
         style: { stroke: inChain ? goStroke : idleStroke, strokeWidth: inChain ? 2.5 : 1.5, opacity: dim ? 0.15 : 1 },
       });
@@ -300,6 +313,11 @@ function Canvas({
           targetHandle: "ret",
           type: "smoothstep",
           animated: returned && !dim,
+          label: inChain ? (returned ? t.flow.backLabel : t.flow.pendingLabel) : undefined,
+          labelStyle: { ...labelStyle, fill: returned ? "var(--stage-done)" : "var(--muted-foreground)" },
+          labelBgStyle: labelBg,
+          labelBgPadding: [4, 2],
+          labelBgBorderRadius: 6,
           markerEnd: { type: MarkerType.ArrowClosed, color: returned ? backStroke : idleStroke, width: 12, height: 12 },
           style: {
             stroke: returned ? backStroke : idleStroke,
@@ -311,7 +329,7 @@ function Canvas({
       }
     }
     return { nodes, edges };
-  }, [requests, users, rtl, selectedId, now, onSelect, onOpen]);
+  }, [requests, users, rtl, selectedId, activeId, now, onSelect, onOpen, t, tl]);
 
   useEffect(() => {
     if (!initialized) return;
@@ -340,6 +358,10 @@ function Canvas({
         fitView
         fitViewOptions={{ padding: 0.1, maxZoom: 1 }}
         onInit={(inst) => inst.fitView({ padding: 0.1, maxZoom: 1 })}
+        onNodeClick={(_, node) => {
+          const id = node.id.startsWith("start-") ? node.id.slice(6) : node.id;
+          onSelect(selectedId === id ? null : id);
+        }}
         onPaneClick={() => onSelect(null)}
         minZoom={0.25}
         maxZoom={1.6}
@@ -359,6 +381,7 @@ export function FlowCanvas(props: {
   requests: Request[];
   now: number;
   selectedId: string | null;
+  activeId: string | null;
   onSelect: (id: string | null) => void;
   onOpen: (id: string) => void;
 }) {

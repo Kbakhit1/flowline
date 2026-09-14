@@ -2,20 +2,25 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ClipboardList, CornerDownLeft, MoveRight } from "lucide-react";
+import { ArrowDown, ArrowUp, ClipboardList, Compass, CornerDownLeft, MoveRight } from "lucide-react";
+import { useMemo } from "react";
 import { useEngine } from "@/lib/engine/store";
+import { buildSeed } from "@/lib/engine/seed";
 import { useT } from "@/lib/i18n";
 import { useHydrated } from "@/components/providers";
 import { LangToggle, PersonAvatar, StageChip, ThemeToggle } from "@/components/common";
 import { LogoLockup } from "@/components/logo";
+import { useTour } from "@/lib/engine/tour";
 
 const PERSONAS = ["u2", "u6", "u3", "u7", "u1"] as const;
 
 export default function Landing() {
   const { t, tl } = useT();
   const hydrated = useHydrated();
-  const users = useEngine((s) => s.db.users);
-  const requests = useEngine((s) => s.db.requests);
+  // the landing always shows the seeded company, whatever state the demo is in
+  const seed = useMemo(() => buildSeed(), []);
+  const users = seed.users;
+  const requests = seed.requests;
   const setCurrentUser = useEngine((s) => s.setCurrentUser);
   const resetDemo = useEngine((s) => s.resetDemo);
   const startBlank = useEngine((s) => s.startBlank);
@@ -25,6 +30,13 @@ export default function Landing() {
   const blank = () => {
     startBlank();
     router.push("/app/setup");
+  };
+
+  const startTour = useTour((s) => s.start);
+  const tour = () => {
+    resetDemo();
+    startTour();
+    router.push("/app");
   };
 
   const enter = (id: string) => {
@@ -52,9 +64,23 @@ export default function Landing() {
           <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">{t.landing.subtitle}</p>
 
           <button
+            onClick={tour}
+            disabled={!hydrated}
+            className="mt-10 flex w-full items-center gap-4 rounded-2xl bg-primary p-4 text-start text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          >
+            <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/15">
+              <Compass className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">{t.tour.cta}</span>
+              <span className="block text-xs opacity-80">{t.tour.ctaText}</span>
+            </span>
+          </button>
+
+          <button
             onClick={blank}
             disabled={!hydrated}
-            className="mt-10 flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-4 text-start transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-60"
+            className="mt-3 flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-4 text-start transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-60"
           >
             <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <ClipboardList className="size-5" />

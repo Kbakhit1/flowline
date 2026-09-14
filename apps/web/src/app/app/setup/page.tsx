@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "cn";
-import { Check, ChevronLeft, ChevronRight, Plus, Printer } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Plus, Printer, Wand2 } from "lucide-react";
 import Link from "next/link";
 import type { RequestType, User } from "@/lib/engine/types";
 import { useEngine, selectMe } from "@/lib/engine/store";
@@ -13,7 +13,7 @@ import { PersonAvatar, SectionTitle } from "@/components/common";
 import { AddPersonDialog, AddTypeDialog } from "@/components/bubbles/pickers";
 import { Composer } from "@/components/bubbles/composer";
 
-import { STEPS, useSetupStatus, type Step } from "@/lib/engine/setup";
+import { STEPS, autofill, autofillAll, useSetupStatus, type Step } from "@/lib/engine/setup";
 
 const inputCls =
   "h-9 w-full rounded-md border bg-transparent px-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
@@ -33,10 +33,16 @@ export default function SetupPage() {
           <h1 className="text-lg font-bold">{t.setup.title}</h1>
           <p className="text-xs text-muted-foreground">{t.setup.subtitle}</p>
         </div>
-        <Link href="/app/setup/print" className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium hover:bg-muted">
-          <Printer className="size-3.5" />
-          {t.setup.print.button}
-        </Link>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <Button size="sm" variant="outline" onClick={() => autofillAll()} title={t.setup.autofillHint}>
+            <Wand2 className="size-3.5" />
+            {t.setup.autofillAll}
+          </Button>
+          <Link href="/app/setup/print" className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium hover:bg-muted">
+            <Printer className="size-3.5" />
+            {t.setup.print.button}
+          </Link>
+        </div>
       </div>
 
       {/* the sheet: 6 lines, each ticks itself off */}
@@ -69,6 +75,13 @@ export default function SetupPage() {
       <p className="-mt-3 text-[11px] text-muted-foreground">{fill(t.setup.progress, { n: fmtNum(status.count) })}</p>
 
       <section className="rounded-2xl border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-muted-foreground">{t.setup.autofillHint}</span>
+          <Button size="xs" variant="ghost" className="text-primary" onClick={() => autofill(step)}>
+            <Wand2 className="size-3" />
+            {t.setup.autofill}
+          </Button>
+        </div>
         {step === "company" && <CompanyStep />}
         {step === "departments" && <DepartmentsStep />}
         {step === "people" && <PeopleStep />}

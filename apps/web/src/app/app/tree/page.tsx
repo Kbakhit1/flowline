@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "cn";
 import { ChevronLeft, ChevronRight, SendHorizontal } from "lucide-react";
 import type { User } from "@/lib/engine/types";
@@ -13,8 +13,7 @@ import { BubbleCard } from "@/components/bubbles/bubble-card";
 import { Button } from "@/components/ui/button";
 import { OrgTree, type PersonStats } from "@/components/tree/org-tree";
 import { FlowCanvas } from "@/components/tree/flow-canvas";
-
-type View = "people" | "lines";
+import { LineStory } from "@/components/tree/line-story";
 
 export default function TreePage() {
   const { t, tl } = useT();
@@ -31,14 +30,27 @@ export default function TreePage() {
   const setSelected = useEngine((s) => s.setTreeFocus);
   const setComposer = useEngine((s) => s.setComposer);
   const openRequest = useEngine((s) => s.openRequest);
-  const [view, setView] = useState<View>("people");
-  const [flowSel, setFlowSel] = useState<string | null>(null);
+  const view = useEngine((s) => s.session.treeView);
+  const setView = useEngine((s) => s.setTreeView);
+  const flowSel = useEngine((s) => s.session.linesFocusId);
+  const setFlowSel = useEngine((s) => s.setLinesFocus);
   const [onlyOpen, setOnlyOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const flowRequests = useMemo(
     () => requests.filter((r) => r.projectId === projectId && (!onlyOpen || isOpen(r.status))),
     [requests, projectId, onlyOpen],
   );
+
+  // the lines view opens on the richest chain so the go/return idea is visible at once
+  useEffect(() => {
+    if (view !== "lines" || flowSel) return;
+    const roots = flowRequests.filter((r) => !r.parentId);
+    const best = roots
+      .map((r) => ({ r, n: flowRequests.filter((x) => x.parentId === r.id).length }))
+      .sort((a, b) => b.n - a.n || b.r.createdAt.localeCompare(a.r.createdAt))[0];
+    if (best && best.n > 0) setFlowSel(best.r.id);
+  }, [view, flowSel, flowRequests, setFlowSel]);
 
   const inProject = useMemo(() => requests.filter((r) => r.projectId === projectId && isOpen(r.status)), [requests, projectId]);
   const stats = useMemo(() => {
@@ -119,7 +131,7 @@ export default function TreePage() {
   if (view === "lines") {
     return (
       <div className="relative flex h-[calc(100dvh-3.5rem-4rem)] min-h-0 flex-col md:h-[calc(100dvh-3.5rem)]">
-        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2" data-tour="lines-toggle">
           {toggle}
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-muted-foreground">{t.flow.subtitle}</p>
@@ -134,11 +146,18 @@ export default function TreePage() {
             ]}
           />
         </div>
-        <div className="relative min-h-0 flex-1">
-          {flowRequests.length === 0 ? (
-            <div className="p-4"><Empty>{t.flow.empty}</Empty></div>
-          ) : (
-            <FlowCanvas requests={flowRequests} now={now} selectedId={flowSel} onSelect={setFlowSel} onOpen={openRequest} />
+        <div className="relative flex min-h-0 flex-1">
+          <div className="relative min-h-0 min-w-0 flex-1">
+            {flowRequests.length === 0 ? (
+              <div className="p-4"><Empty>{t.flow.empty}</Empty></div>
+            ) : (
+              <FlowCanvas requests={flowRequests} now={now} selectedId={flowSel} activeId={activeId} onSelect={setFlowSel} onOpen={openRequest} />
+            )}
+          </div>
+          {desktop && (
+            <aside className="w-[320px] shrink-0 border-s">
+              <LineStory requests={flowRequests} selectedId={flowSel} activeId={activeId} onActive={setActiveId} />
+            </aside>
           )}
           <div className="pointer-events-none absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full bg-card/90 px-3 py-1.5 text-[10px] text-muted-foreground ring-1 ring-foreground/10 backdrop-blur">
             <span className="inline-flex items-center gap-1"><span className="inline-block h-0.5 w-5 bg-primary" />{t.flow.legendGo}</span>
@@ -146,6 +165,11 @@ export default function TreePage() {
             <span className="inline-flex items-center gap-1"><span className="inline-block h-0 w-5 border-t-2 border-dotted border-foreground/40" />{t.flow.legendPending}</span>
           </div>
         </div>
+        {!desktop && flowSel && (
+          <div className="h-[38dvh] shrink-0 border-t bg-card">
+            <LineStory requests={flowRequests} selectedId={flowSel} activeId={activeId} onActive={setActiveId} />
+          </div>
+        )}
       </div>
     );
   }

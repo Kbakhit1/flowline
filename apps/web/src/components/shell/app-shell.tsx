@@ -20,6 +20,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { RequestSheet } from "@/components/bubbles/request-sheet";
 import { ComposerSheet } from "@/components/bubbles/composer";
+import { Tour } from "@/components/tour";
+import { useTour } from "@/lib/engine/tour";
+import { Compass } from "lucide-react";
 
 const NAV = [
   { href: "/app", key: "inbox", icon: Inbox },
@@ -103,6 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <RequestSheet />
       <ComposerSheet />
+      <Tour />
     </div>
   );
 }
@@ -119,6 +123,7 @@ function TopBar() {
         <ProjectPicker compact />
       </div>
       <div className="ms-auto flex items-center gap-1">
+        <TourButton />
         <LangToggle className="hidden sm:inline-flex" />
         <ThemeToggle />
         <PersonaMenu />
@@ -126,6 +131,29 @@ function TopBar() {
       <span className="sr-only">{tl(me.name)}</span>
       <span className="sr-only">{t.common.viewAs}</span>
     </header>
+  );
+}
+
+function TourButton() {
+  const { t } = useT();
+  const active = useTour((s) => s.active);
+  const start = useTour((s) => s.start);
+  const resetDemo = useEngine((s) => s.resetDemo);
+  const mode = useEngine((s) => s.session.mode);
+  if (active) return null;
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => {
+        if (mode === "blank") resetDemo();
+        start();
+      }}
+      title={t.tour.ctaText}
+    >
+      <Compass />
+      <span className="hidden sm:inline">{t.tour.title}</span>
+    </Button>
   );
 }
 
@@ -174,7 +202,7 @@ function PersonaMenu() {
   const setCurrentUser = useEngine((s) => s.setCurrentUser);
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" className="h-9 gap-2 px-1.5" />}>
+      <DropdownMenuTrigger render={<Button variant="ghost" className="h-9 gap-2 px-1.5" data-tour="persona" />}>
         <PersonAvatar user={me} size={28} />
         <span className="hidden max-w-[140px] flex-col items-start leading-tight sm:flex">
           <span className="truncate text-xs font-semibold">{tl(me.name)}</span>

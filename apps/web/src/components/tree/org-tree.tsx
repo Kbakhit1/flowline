@@ -53,7 +53,6 @@ function PersonNodeView({ data }: NodeProps<PersonNode>) {
         selected ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40",
       )}
       style={{ width: NODE_W, height: NODE_H }}
-      onClick={() => data.onSelect(user.id)}
     >
       <Handle type="target" position={Position.Top} />
       <PersonAvatar user={user} size={34} />
@@ -178,6 +177,8 @@ function TreeCanvas({ stats, selectedId, onSelect }: { stats: Map<string, Person
       fitView
       fitViewOptions={{ padding: 0.12, maxZoom: 1 }}
       onInit={(inst) => inst.fitView({ padding: 0.12, maxZoom: 1 })}
+      onNodeClick={(_, node) => onSelect(selectedId === node.id ? null : node.id)}
+      onPaneClick={() => onSelect(null)}
       minZoom={0.3}
       maxZoom={1.6}
       nodesConnectable={false}

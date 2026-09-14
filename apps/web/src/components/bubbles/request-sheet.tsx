@@ -22,7 +22,7 @@ export function RequestSheet() {
   const desktop = useIsDesktop();
   const locale = useLocale();
   return (
-    <Sheet open={!!r} onOpenChange={(o) => !o && openRequest(null)}>
+    <Sheet open={!!r} onOpenChange={(o) => !o && openRequest(null)} modal={false}>
       <SheetContent
         side={desktop ? (locale === "ar" ? "left" : "right") : "bottom"}
         className={cn("gap-0 overflow-y-auto p-0 thin-scroll", desktop ? "data-[side=left]:sm:max-w-lg data-[side=right]:sm:max-w-lg" : "h-[92dvh] rounded-t-2xl")}
@@ -182,7 +182,7 @@ function RequestDetail({ r }: { r: Request }) {
 
         {/* actions */}
         {allowed.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5" data-tour="sheet-actions">
             {ordered.map((a) => (
               <Button
                 key={a}
