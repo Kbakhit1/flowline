@@ -177,6 +177,8 @@ export const dict = {
       second: "الثاني",
       stacked: "أعلى وأسفل",
       sideBySide: "جنباً إلى جنب",
+      preset: "نسبة التقسيم",
+      dragHint: "اسحب لتغيير الحجم، واضغط مرتين للعودة إلى النصف",
     },
     roles: {
       employee: "موظف",
@@ -650,6 +652,8 @@ export const dict = {
       second: "Second",
       stacked: "Top / bottom",
       sideBySide: "Side by side",
+      preset: "Split ratio",
+      dragHint: "Drag to resize, double-click to reset to half",
     },
     roles: {
       employee: "Employee",
