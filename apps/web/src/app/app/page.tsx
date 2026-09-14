@@ -8,6 +8,7 @@ import { useT, useFmt } from "@/lib/i18n";
 import { Empty, PersonAvatar, Segmented } from "@/components/common";
 import { BubbleCard } from "@/components/bubbles/bubble-card";
 import { Composer } from "@/components/bubbles/composer";
+import { SetupBanner } from "@/components/setup-banner";
 
 type Tab = "mine" | "approvals" | "awaiting" | "sent" | "team";
 
@@ -17,6 +18,7 @@ export default function InboxPage() {
   const now = useNow();
   const me = useEngine(selectMe);
   const users = useEngine((s) => s.db.users);
+  const projectId = useEngine((s) => s.session.projectId);
   const groups = useInbox();
   const [tab, setTab] = useState<Tab>("mine");
 
@@ -55,7 +57,8 @@ export default function InboxPage() {
       </div>
 
       <div className="flex flex-1 flex-col gap-2 py-2 pb-4">
-        {list.length === 0 && <Empty>{empty[active]}</Empty>}
+        <SetupBanner />
+        {list.length === 0 && <Empty>{projectId ? empty[active] : t.landing.noProject}</Empty>}
 
         {active !== "team" &&
           list.map((r) => <BubbleCard key={r.id} r={r} now={now} mode={active === "sent" ? "sent" : active === "awaiting" ? "awaiting" : "mine"} />)}
@@ -78,9 +81,11 @@ export default function InboxPage() {
           ))}
       </div>
 
-      <div className="sticky bottom-16 z-20 -mx-3 bg-gradient-to-t from-background via-background to-transparent px-3 pt-3 pb-3 md:bottom-0 sm:-mx-5 sm:px-5">
-        <Composer />
-      </div>
+      {projectId && (
+        <div className="sticky bottom-16 z-20 -mx-3 bg-gradient-to-t from-background via-background to-transparent px-3 pt-3 pb-3 md:bottom-0 sm:-mx-5 sm:px-5">
+          <Composer />
+        </div>
+      )}
     </div>
   );
 }

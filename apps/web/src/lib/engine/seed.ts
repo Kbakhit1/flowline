@@ -445,6 +445,35 @@ export function buildSeed(now = Date.now()): DbSnapshot {
   };
 }
 
+/** An empty company for the training sheet: one owner, one department, the base request type. */
+export function buildBlank(): DbSnapshot {
+  return {
+    company: {
+      id: C,
+      name: l("", ""),
+      settings: { projectChatEnabled: true, numerals: "latin", calendar: "gregory", workingDays: [0, 1, 2, 3, 4], deadlineMode: "working" },
+    },
+    departments: [{ id: "d_mgmt", companyId: C, name: l("الإدارة العامة", "Management"), supervisorId: "owner" }],
+    users: [u("owner", "", "", "", "", "d_mgmt", null, "executive", 170)],
+    projects: [],
+    requestTypes: [
+      {
+        id: "t_task",
+        companyId: C,
+        name: l("مهمة", "Task"),
+        fields: [],
+        routing: { firstRecipient: { kind: "chosen" }, approval: "none", defaultDeadlineDays: 3, requiredAttachments: [], hasLines: false },
+      },
+    ],
+    requests: [],
+    audit: [],
+    deadlineLogs: [],
+    attachments: [],
+    messages: [],
+    notifications: [],
+  };
+}
+
 /* ---------- small constructors ---------- */
 
 function u(

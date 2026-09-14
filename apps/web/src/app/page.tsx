@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, CornerDownLeft, MoveRight } from "lucide-react";
+import { ArrowDown, ArrowUp, ClipboardList, CornerDownLeft, MoveRight } from "lucide-react";
 import { useEngine } from "@/lib/engine/store";
 import { useT } from "@/lib/i18n";
 import { useHydrated } from "@/components/providers";
@@ -17,9 +17,18 @@ export default function Landing() {
   const users = useEngine((s) => s.db.users);
   const requests = useEngine((s) => s.db.requests);
   const setCurrentUser = useEngine((s) => s.setCurrentUser);
+  const resetDemo = useEngine((s) => s.resetDemo);
+  const startBlank = useEngine((s) => s.startBlank);
+  const mode = useEngine((s) => s.session.mode);
   const router = useRouter();
 
+  const blank = () => {
+    startBlank();
+    router.push("/app/setup");
+  };
+
   const enter = (id: string) => {
+    if (mode === "blank") resetDemo();
     setCurrentUser(id);
     router.push("/app");
   };
@@ -42,7 +51,22 @@ export default function Landing() {
           <h1 className="mt-3 text-balance text-3xl leading-[1.25] font-bold sm:text-4xl">{t.landing.title}</h1>
           <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">{t.landing.subtitle}</p>
 
-          <h2 className="mt-10 text-sm font-semibold text-muted-foreground">{t.landing.enterAs}</h2>
+          <button
+            onClick={blank}
+            disabled={!hydrated}
+            className="mt-10 flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-4 text-start transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-60"
+          >
+            <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <ClipboardList className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">{t.landing.blankTitle}</span>
+              <span className="block text-xs text-muted-foreground">{t.landing.blankText}</span>
+            </span>
+            <span className="shrink-0 text-xs font-semibold text-primary">{t.landing.blankCta}</span>
+          </button>
+
+          <h2 className="mt-8 text-sm font-semibold text-muted-foreground">{t.landing.demoTitle}</h2>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {PERSONAS.map((id) => {
               const u = users.find((x) => x.id === id)!;

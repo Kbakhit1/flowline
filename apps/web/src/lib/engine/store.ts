@@ -20,7 +20,7 @@ import type {
   RoleKey,
   User,
 } from "./types";
-import { buildSeed, SEED_VERSION } from "./seed";
+import { buildBlank, buildSeed, SEED_VERSION } from "./seed";
 import {
   addDeadlineDays,
   directionOf,
@@ -69,6 +69,8 @@ interface Session {
   openRequestId: string | null;
   composer: ComposerDraft | null;
   treeFocusId: string | null;
+  /** demo = seeded company; blank = the training sheet built from scratch */
+  mode: "demo" | "blank";
 }
 
 export interface EngineState {
@@ -108,9 +110,23 @@ export interface EngineState {
 
   // admin
   updateSettings: (patch: Partial<CompanySettings>) => void;
+  updateCompanyName: (name: string) => void;
+  updateUser: (id: string, patch: { name?: string; title?: string; departmentId?: string; managerId?: string | null; role?: RoleKey }) => void;
   addUser: (input: NewUserInput) => string;
+  addDepartment: (name: string, supervisorId: string) => string;
+  addProject: (input: NewProjectInput) => string;
   addRequestType: (input: NewTypeInput) => string;
   resetDemo: () => void;
+  startBlank: () => void;
+}
+
+export interface NewProjectInput {
+  name: string;
+  client: string;
+  phase: "study" | "execution";
+  managerId: string;
+  siteSupervisorId: string;
+  memberIds: string[];
 }
 
 export interface NewUserInput {
@@ -143,7 +159,15 @@ function fresh(): { db: DbSnapshot; session: Session } {
       openRequestId: null,
       composer: null,
       treeFocusId: null,
+      mode: "demo",
     },
+  };
+}
+
+function blank(): { db: DbSnapshot; session: Session } {
+  return {
+    db: buildBlank(),
+    session: { currentUserId: "owner", projectId: "", openRequestId: null, composer: null, treeFocusId: null, mode: "blank" },
   };
 }
 
@@ -620,8 +644,60 @@ export const useEngine = create<EngineState>()(
             };
             db.users = [...db.users, u];
             const pid = get().session.projectId;
-            db.projects = db.projects.map((p) => (p.id === pid ? { ...p, memberIds: [...p.memberIds, id] } : p));
+            if (pid) db.projects = db.projects.map((p) => (p.id === pid ? { ...p, memberIds: [...p.memberIds, id] } : p));
           });
+          return id;
+        },
+
+        updateCompanyName: (name) =>
+          mutate((db) => {
+            db.company = { ...db.company, name: same(name.trim()) };
+          }),
+
+        updateUser: (id, patch) =>
+          mutate((db) => {
+            db.users = db.users.map((u) =>
+              u.id === id
+                ? {
+                    ...u,
+                    ...(patch.name !== undefined ? { name: same(patch.name.trim()) } : {}),
+                    ...(patch.title !== undefined ? { title: same(patch.title.trim()) } : {}),
+                    ...(patch.departmentId !== undefined ? { departmentId: patch.departmentId } : {}),
+                    ...(patch.managerId !== undefined ? { managerId: patch.managerId } : {}),
+                    ...(patch.role !== undefined ? { role: patch.role } : {}),
+                  }
+                : u,
+            );
+          }),
+
+        addDepartment: (name, supervisorId) => {
+          const id = `d_${uid()}`;
+          mutate((db) => {
+            db.departments = [...db.departments, { id, companyId: db.company.id, name: same(name.trim()), supervisorId }];
+          });
+          return id;
+        },
+
+        addProject: (input) => {
+          const id = `p_${uid()}`;
+          mutate((db) => {
+            const seq = db.projects.length + 1;
+            db.projects = [
+              ...db.projects,
+              {
+                id,
+                companyId: db.company.id,
+                ref: `PRJ-${new Date().getFullYear().toString().slice(2)}-${String(seq).padStart(3, "0")}`,
+                name: same(input.name.trim()),
+                client: same(input.client.trim()),
+                phase: input.phase,
+                managerId: input.managerId,
+                siteSupervisorId: input.siteSupervisorId,
+                memberIds: Array.from(new Set([...input.memberIds, input.managerId, input.siteSupervisorId])),
+              },
+            ];
+          });
+          set((st) => ({ session: { ...st.session, projectId: id } }));
           return id;
         },
 
@@ -656,6 +732,7 @@ export const useEngine = create<EngineState>()(
         },
 
         resetDemo: () => set({ ...fresh() }),
+        startBlank: () => set({ ...blank() }),
       };
     },
     {

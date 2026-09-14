@@ -65,31 +65,33 @@ export function Composer({
 
   const type = types.find((x) => x.id === d.typeId) ?? types[0];
   const project = projects.find((p) => p.id === d.projectId) ?? projects[0];
-  const people = usePeople(d.projectId);
+  const people = usePeople(project?.id ?? "");
   const parent = d.parentId ? requests.find((r) => r.id === d.parentId) : null;
 
   // default recipient follows the routing rule; the user can still override it
   const ruleRecipient = useMemo(
     () =>
-      resolveFirstRecipient(type, {
-        creator: me,
-        users,
-        projectManagerId: project.managerId,
-        departmentSupervisor: (id) => departments.find((x) => x.id === id)?.supervisorId,
-      }),
-    [type, me, users, project.managerId, departments],
+      project
+        ? resolveFirstRecipient(type, {
+            creator: me,
+            users,
+            projectManagerId: project.managerId,
+            departmentSupervisor: (id) => departments.find((x) => x.id === id)?.supervisorId,
+          })
+        : null,
+    [type, me, users, project, departments],
   );
   const recipientId = d.recipientId ?? ruleRecipient;
   const recipient = users.find((u) => u.id === recipientId) ?? null;
   const deadline = d.deadline ?? addDeadlineDays(new Date(), type.routing.defaultDeadlineDays, settings).toISOString();
-  const needsApproval = type.routing.approval === "project_manager" && me.id !== project.managerId;
+  const needsApproval = type.routing.approval === "project_manager" && me.id !== project?.managerId;
   const direction = recipient ? directionOf(users, me.id, recipient.id) : null;
-  const canSend = d.text.trim().length > 0 && !!recipient;
+  const canSend = d.text.trim().length > 0 && !!recipient && !!project;
 
   const send = () => {
-    if (!canSend || !recipient) return;
+    if (!canSend || !recipient || !project) return;
     const id = createRequest({
-      projectId: d.projectId,
+      projectId: project.id,
       typeId: type.id,
       text: d.text,
       recipientId: recipient.id,
@@ -105,6 +107,8 @@ export function Composer({
     onDone?.(id);
     openRequest(id);
   };
+
+  if (!project) return <p className="rounded-2xl border border-dashed p-4 text-center text-sm text-muted-foreground">{t.landing.noProject}</p>;
 
   return (
     <div className={cn("relative rounded-2xl border bg-card p-2.5 shadow-sm", className)}>

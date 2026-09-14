@@ -138,7 +138,7 @@ export function PersonPicker({ people, value, onChange }: { people: ReturnType<t
   );
 }
 
-function AddPersonDialog({ initialName, onClose, onCreated }: { initialName: string; onClose: () => void; onCreated: (u: User) => void }) {
+export function AddPersonDialog({ initialName, onClose, onCreated }: { initialName: string; onClose: () => void; onCreated: (u: User) => void }) {
   const { t, tl } = useT();
   const me = useEngine(selectMe);
   const users = useEngine((s) => s.db.users);
@@ -272,7 +272,7 @@ export function TypePicker({ types, value, onChange }: { types: RequestType[]; v
 type Kind = Exclude<FieldKind, "attachment">;
 type FieldRow = { label: string; kind: Kind; options: string };
 
-function AddTypeDialog({ initialName, onClose, onCreated }: { initialName: string; onClose: () => void; onCreated: (t: RequestType) => void }) {
+export function AddTypeDialog({ initialName, onClose, onCreated }: { initialName: string; onClose: () => void; onCreated: (t: RequestType) => void }) {
   const { t } = useT();
   const addRequestType = useEngine((s) => s.addRequestType);
   const [name, setName] = useState(initialName);
