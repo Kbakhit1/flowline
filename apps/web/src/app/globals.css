@@ -204,6 +204,17 @@
   scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent) transparent;
 }
 
+/* Print: only the page content, on paper */
+@media print {
+  @page { size: A4; margin: 12mm; }
+  html, body { background: #fff !important; color: #000 !important; }
+  aside, header, nav, .no-print { display: none !important; }
+  main { padding: 0 !important; }
+  .print-page { max-width: none !important; padding: 0 !important; }
+  .break-before { break-before: page; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

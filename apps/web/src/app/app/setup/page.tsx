@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "cn";
-import { Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Plus, Printer } from "lucide-react";
+import Link from "next/link";
 import type { RequestType, User } from "@/lib/engine/types";
 import { useEngine, selectMe } from "@/lib/engine/store";
 import { useT, useFmt, fill } from "@/lib/i18n";
@@ -27,9 +28,15 @@ export default function SetupPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-3 py-4 sm:px-5">
-      <div>
-        <h1 className="text-lg font-bold">{t.setup.title}</h1>
-        <p className="text-xs text-muted-foreground">{t.setup.subtitle}</p>
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-bold">{t.setup.title}</h1>
+          <p className="text-xs text-muted-foreground">{t.setup.subtitle}</p>
+        </div>
+        <Link href="/app/setup/print" className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium hover:bg-muted">
+          <Printer className="size-3.5" />
+          {t.setup.print.button}
+        </Link>
       </div>
 
       {/* the sheet: 6 lines, each ticks itself off */}
