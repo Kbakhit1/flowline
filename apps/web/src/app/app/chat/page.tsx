@@ -127,7 +127,7 @@ export default function ChatPage() {
           )}
         </div>
 
-        <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3 thin-scroll">
+        <div ref={listRef} data-tour="chat-list" className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3 thin-scroll">
           {list.length === 0 && <p className="text-xs text-muted-foreground">{t.chat.empty}</p>}
           {list.map((m) => {
             const s = users.find((u) => u.id === m.senderId);

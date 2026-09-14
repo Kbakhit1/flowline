@@ -22,7 +22,7 @@ import { RequestSheet } from "@/components/bubbles/request-sheet";
 import { ComposerSheet } from "@/components/bubbles/composer";
 import { Tour } from "@/components/tour";
 import { useTour } from "@/lib/engine/tour";
-import { Compass } from "lucide-react";
+import { Columns2, Compass, MessageSquareReply } from "lucide-react";
 
 const NAV = [
   { href: "/app", key: "inbox", icon: Inbox },
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
         {NAV.map((n) => (
           <Link
             key={n.href}
@@ -116,7 +116,7 @@ function TopBar() {
   const { t, tl } = useT();
   const me = useEngine(selectMe);
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/90 px-3 backdrop-blur sm:px-4">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3 sm:px-4">
       <div className="flex items-center gap-2 md:hidden">
         <Logo size={24} />
       </div>
@@ -141,20 +141,43 @@ function TourButton() {
   const start = useTour((s) => s.start);
   const resetDemo = useEngine((s) => s.resetDemo);
   const mode = useEngine((s) => s.session.mode);
-  if (active) return null;
+  const framed = useEngine((s) => !!s.pinnedUserId);
+  if (active || framed) return null;
+  const go = (id: "cycle" | "replies") => {
+    if (mode === "blank") resetDemo();
+    start(id);
+  };
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => {
-        if (mode === "blank") resetDemo();
-        start();
-      }}
-      title={t.tour.ctaText}
-    >
-      <Compass />
-      <span className="hidden sm:inline">{t.tour.title}</span>
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
+        <Compass />
+        <span className="hidden sm:inline">{t.tour.menu}</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-72">
+        <DropdownMenuItem onClick={() => go("cycle")} className="gap-2.5">
+          <Compass className="size-4 text-primary" />
+          <span className="flex min-w-0 flex-col">
+            <span className="text-sm">{t.tour.cycle.title}</span>
+            <span className="truncate text-[10px] text-muted-foreground">{t.tour.cycle.ctaText}</span>
+          </span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => go("replies")} className="gap-2.5">
+          <MessageSquareReply className="size-4 text-primary" />
+          <span className="flex min-w-0 flex-col">
+            <span className="text-sm">{t.tour.replies.title}</span>
+            <span className="truncate text-[10px] text-muted-foreground">{t.tour.replies.ctaText}</span>
+          </span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => (window.location.href = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/split/`)} className="gap-2.5">
+          <Columns2 className="size-4 text-primary" />
+          <span className="flex min-w-0 flex-col">
+            <span className="text-sm">{t.split.title}</span>
+            <span className="truncate text-[10px] text-muted-foreground">{t.split.ctaText}</span>
+          </span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

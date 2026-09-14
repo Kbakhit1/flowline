@@ -111,7 +111,7 @@ function RequestDetail({ r }: { r: Request }) {
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 border-b bg-popover/95 px-4 pt-4 pb-3 backdrop-blur">
+      <div className="sticky top-0 z-10 border-b bg-popover px-4 pt-4 pb-3">
         <div className="flex items-center gap-1.5 pe-8">
           <span className="font-mono text-[11px] text-muted-foreground">{r.ref}</span>
           <StageChip
@@ -292,6 +292,7 @@ function RequestDetail({ r }: { r: Request }) {
             })}
           </div>
           <form
+            data-tour="sheet-thread"
             className="mt-2 flex items-end gap-1.5"
             onSubmit={(e) => {
               e.preventDefault();

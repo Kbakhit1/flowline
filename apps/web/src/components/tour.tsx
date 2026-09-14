@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "cn";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Play, X } from "lucide-react";
 import { useEngine } from "@/lib/engine/store";
-import { STEP_SPECS, TOUR_STEPS, discoverRoot, useTour, type TourStepId } from "@/lib/engine/tour";
+import { TOURS, discoverRoot, useTour } from "@/lib/engine/tour";
 import { useT, useFmt, fill } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/common";
@@ -17,6 +17,7 @@ export function Tour() {
   const router = useRouter();
   const pathname = usePathname();
   const active = useTour((s) => s.active);
+  const tourId = useTour((s) => s.tourId);
   const index = useTour((s) => s.index);
   const startedAt = useTour((s) => s.startedAt);
   const refs = useTour((s) => s.refs);
@@ -26,12 +27,15 @@ export function Tour() {
   const stop = useTour((s) => s.stop);
 
   const db = useEngine((s) => s.db);
-  const currentUserId = useEngine((s) => s.session.currentUserId);
+  const currentUserId = useEngine((s) => s.pinnedUserId ?? s.session.currentUserId);
   const setCurrentUser = useEngine((s) => s.setCurrentUser);
   const openRequest = useEngine((s) => s.openRequest);
 
-  const stepId: TourStepId = TOUR_STEPS[index];
-  const spec = STEP_SPECS[stepId];
+  const tour = TOURS[tourId];
+  const stepId = tour.steps[index];
+  const spec = tour.specs[stepId];
+  const total = tour.steps.length;
+
   // phones get a compact card; the instructions unfold on tap
   const [expanded, setExpanded] = useState(true);
   useEffect(() => setExpanded(index === 0), [index]);
@@ -54,30 +58,30 @@ export function Tour() {
     };
   }, [active]);
 
-  // pick up the request even when the user created it by hand
+  // the cycle tour follows one request even when the user created it by hand
   useEffect(() => {
-    if (!active || !startedAt) return;
+    if (!active || !startedAt || tourId !== "cycle") return;
     const root = discoverRoot(db, refs, startedAt);
     if (root && refs.rootId !== root.id) setRefs({ rootId: root.id });
     if (root) {
       const ids = db.requests.filter((r) => r.parentId === root.id).map((r) => r.id);
       if (ids.length !== refs.subIds.length) setRefs({ subIds: ids });
     }
-  }, [active, startedAt, db, refs, setRefs]);
+  }, [active, tourId, startedAt, db, refs, setRefs]);
 
   const done = useMemo(() => (active && startedAt ? spec.done(db, refs, startedAt) : false), [active, startedAt, spec, db, refs]);
 
-  // entering a step: persona, route, open request, lines view
+  // entering a step: persona, route, open request, passive setup
   useEffect(() => {
     if (!active) return;
     if (spec.persona && spec.persona !== currentUserId) setCurrentUser(spec.persona);
     if (pathname !== spec.route) router.push(spec.route);
     const id = spec.open(refs);
     const timer = setTimeout(() => openRequest(id), 150);
-    if (stepId === "lines") spec.run(refs);
+    if (spec.passive) spec.run(refs);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, index]);
+  }, [active, tourId, index]);
 
   // highlight the element the step talks about
   useEffect(() => {
@@ -102,9 +106,9 @@ export function Tour() {
   if (!active) return null;
 
   const persona = spec.persona ? db.users.find((u) => u.id === spec.persona) : null;
-  const copy = t.tour.steps[stepId];
-  const last = index === TOUR_STEPS.length - 1;
-  const hasRun = stepId !== "intro" && stepId !== "end" && stepId !== "notifications" && stepId !== "lines";
+  const copy = (t.tour[tourId].steps as Record<string, { title: string; text: string }>)[stepId];
+  const last = index === total - 1;
+  const hasRun = !spec.passive;
 
   return (
     <div
@@ -112,11 +116,11 @@ export function Tour() {
       onPointerDown={(e) => e.stopPropagation()}
       className="fixed inset-x-2 top-[3.9rem] z-[70] rounded-2xl border border-primary/40 bg-card p-2.5 shadow-2xl md:inset-x-auto md:top-auto md:bottom-4 md:start-4 md:w-[276px] md:p-3"
       role="dialog"
-      aria-label={t.tour.title}
+      aria-label={t.tour[tourId].title}
     >
       <div className="flex items-center gap-2">
         <span className="inline-flex h-5 items-center rounded-full bg-primary/10 px-2 text-[11px] font-semibold text-primary tabular">
-          {fill(t.tour.progress, { n: fmtNum(index + 1), total: fmtNum(TOUR_STEPS.length) })}
+          {fill(t.tour.progress, { n: fmtNum(index + 1), total: fmtNum(total) })}
         </span>
         {persona && (
           <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -133,8 +137,8 @@ export function Tour() {
 
       <button type="button" onClick={() => setExpanded((v) => !v)} className="mt-1.5 flex w-full items-start gap-2 text-start md:mt-2 md:cursor-default">
         <span className="min-w-0 flex-1">
-          <h3 className="text-[13px] font-bold md:text-sm">{copy.title}</h3>
-          <p className={cn("mt-0.5 text-[11px] leading-relaxed text-muted-foreground md:mt-1 md:text-xs", !expanded && "line-clamp-1 md:line-clamp-none")}>{copy.text}</p>
+          <h3 className="text-[13px] font-bold md:text-sm">{copy?.title}</h3>
+          <p className={cn("mt-0.5 text-[11px] leading-relaxed text-muted-foreground md:mt-1 md:text-xs", !expanded && "line-clamp-1 md:line-clamp-none")}>{copy?.text}</p>
         </span>
         <span className="mt-0.5 text-muted-foreground md:hidden">{expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}</span>
       </button>

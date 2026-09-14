@@ -9,7 +9,7 @@ import { PersonAvatar, SectionTitle, Segmented } from "@/components/common";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Columns2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { t, tl } = useT();
@@ -37,11 +37,18 @@ export default function SettingsPage() {
         <p className="text-xs text-muted-foreground">{tl(company.name)}</p>
       </div>
 
-      <Link href="/app/setup" className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-sm transition-colors hover:border-primary/40">
-        <ClipboardList className="size-4 text-primary" />
-        <span className="flex-1 font-medium">{t.setup.title}</span>
-        <span className="text-xs text-muted-foreground">{t.setup.open}</span>
-      </Link>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Link href="/app/setup" className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-sm transition-colors hover:border-primary/40">
+          <ClipboardList className="size-4 text-primary" />
+          <span className="flex-1 font-medium">{t.setup.title}</span>
+          <span className="text-xs text-muted-foreground">{t.setup.open}</span>
+        </Link>
+        <Link href="/split" className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-sm transition-colors hover:border-primary/40">
+          <Columns2 className="size-4 text-primary" />
+          <span className="flex-1 font-medium">{t.split.title}</span>
+          <span className="text-xs text-muted-foreground">{t.split.ctaText}</span>
+        </Link>
+      </div>
 
       <section className="flex flex-col gap-4">
         <Row label={t.settings.language}>

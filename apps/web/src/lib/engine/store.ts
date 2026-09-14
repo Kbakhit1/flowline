@@ -79,6 +79,11 @@ export interface EngineState {
   db: DbSnapshot;
   session: Session;
   hydrated: boolean;
+  /** split-screen frames pin their own persona; never persisted */
+  pinnedUserId: string | null;
+  pinUser: (id: string | null) => void;
+  /** replace the data with what another frame just saved */
+  adoptDb: (db: DbSnapshot) => void;
 
   // session
   setCurrentUser: (id: string) => void;
@@ -291,10 +296,17 @@ export const useEngine = create<EngineState>()(
       return {
         ...fresh(),
         hydrated: false,
+        pinnedUserId: null,
+        pinUser: (id) => set({ pinnedUserId: id }),
+        adoptDb: (db) => set({ db }),
 
         /* ---------- session ---------- */
         setCurrentUser: (id) =>
-          set((s) => ({ session: { ...s.session, currentUserId: id, openRequestId: null, composer: null } })),
+          set((s) =>
+            s.pinnedUserId
+              ? { pinnedUserId: id, session: { ...s.session, openRequestId: null, composer: null } }
+              : { session: { ...s.session, currentUserId: id, openRequestId: null, composer: null } },
+          ),
         setProject: (id) => set((s) => ({ session: { ...s.session, projectId: id } })),
         openRequest: (id) => {
           set((s) => ({ session: { ...s.session, openRequestId: id } }));
@@ -309,7 +321,7 @@ export const useEngine = create<EngineState>()(
         createRequest: (input, asUserId) => {
           const id = uid();
           mutate((db) => {
-            const me = asUserId ?? get().session.currentUserId;
+            const me = asUserId ?? (get().pinnedUserId ?? get().session.currentUserId);
             const creator = userOf(db, me)!;
             const type = db.requestTypes.find((t) => t.id === input.typeId)!;
             const project = db.projects.find((p) => p.id === input.projectId)!;
@@ -395,7 +407,7 @@ export const useEngine = create<EngineState>()(
 
         approve: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             const type = db.requestTypes.find((t) => t.id === r.typeId)!;
@@ -423,7 +435,7 @@ export const useEngine = create<EngineState>()(
 
         reject: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             patch(db, id, { status: "rejected", closedAt: nowIso() });
@@ -436,7 +448,7 @@ export const useEngine = create<EngineState>()(
 
         requestClarification: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             patch(db, id, { status: "pending_clarification", ownerId: r.creatorId });
@@ -449,7 +461,7 @@ export const useEngine = create<EngineState>()(
 
         clarify: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             const project = db.projects.find((p) => p.id === r.projectId)!;
@@ -464,12 +476,12 @@ export const useEngine = create<EngineState>()(
         start: (id) =>
           mutate((db) => {
             patch(db, id, { status: "in_progress" });
-            audit(db, id, "started", get().session.currentUserId, null, "");
+            audit(db, id, "started", (get().pinnedUserId ?? get().session.currentUserId), null, "");
           }),
 
         complete: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             patch(db, id, { status: "complete", ownerId: r.returnToId });
@@ -483,7 +495,7 @@ export const useEngine = create<EngineState>()(
 
         close: (id) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             patch(db, id, { status: "closed", closedAt: nowIso() });
@@ -493,7 +505,7 @@ export const useEngine = create<EngineState>()(
 
         reopen: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             const last = [...db.audit].reverse().find((a) => a.requestId === id && a.action === "completed");
@@ -508,7 +520,7 @@ export const useEngine = create<EngineState>()(
 
         cancel: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             patch(db, id, { status: "cancelled", closedAt: nowIso() });
@@ -527,7 +539,7 @@ export const useEngine = create<EngineState>()(
 
         transfer: (id, toUserId, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             const offPath = directionOf(db.users, me, toUserId) === "cross";
@@ -541,7 +553,7 @@ export const useEngine = create<EngineState>()(
 
         returnToSender: (id, note) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             const prev = [...db.audit]
@@ -558,7 +570,7 @@ export const useEngine = create<EngineState>()(
 
         extend: (id, newDeadline, reason) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             const seq = db.deadlineLogs.filter((d) => d.requestId === id).length + 1;
@@ -572,7 +584,7 @@ export const useEngine = create<EngineState>()(
 
         recordProgress: (id, lineId, qtyDone) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r) return;
             const lines = r.lines.map((ln) => (ln.id === lineId ? { ...ln, qtyDone } : ln));
@@ -586,7 +598,7 @@ export const useEngine = create<EngineState>()(
 
         markSeen: (id) =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             const r = reqOf(db, id);
             if (!r || r.seenBy.includes(me)) return;
             db.requests = db.requests.map((x) => (x.id === id ? { ...x, seenBy: [...x.seenBy, me] } : x));
@@ -599,7 +611,7 @@ export const useEngine = create<EngineState>()(
               id: uid(),
               projectId,
               requestId,
-              senderId: get().session.currentUserId,
+              senderId: (get().pinnedUserId ?? get().session.currentUserId),
               text: same(text.trim()),
               at: nowIso(),
               convertedToRequestId: null,
@@ -616,7 +628,7 @@ export const useEngine = create<EngineState>()(
 
         markAllRead: () =>
           mutate((db) => {
-            const me = get().session.currentUserId;
+            const me = (get().pinnedUserId ?? get().session.currentUserId);
             db.notifications = db.notifications.map((n) =>
               n.userId === me && !n.readAt ? { ...n, readAt: nowIso() } : n,
             );
@@ -775,7 +787,9 @@ export const useEngine = create<EngineState>()(
 /* ---------- selectors (pure, memo-friendly) ---------- */
 
 export const selectMe = (s: EngineState): User =>
-  s.db.users.find((u) => u.id === s.session.currentUserId) ?? s.db.users[0];
+  s.db.users.find((u) => u.id === (s.pinnedUserId ?? s.session.currentUserId)) ?? s.db.users[0];
 
-export const selectUnreadCount = (s: EngineState): number =>
-  s.db.notifications.filter((n) => n.userId === s.session.currentUserId && !n.readAt).length;
+export const selectUnreadCount = (s: EngineState): number => {
+  const me = s.pinnedUserId ?? s.session.currentUserId;
+  return s.db.notifications.filter((n) => n.userId === me && !n.readAt).length;
+};

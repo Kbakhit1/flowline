@@ -52,7 +52,7 @@ export default function InboxPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-3 sm:px-5">
-      <div className="sticky top-14 z-20 -mx-3 bg-background/95 px-3 pt-3 pb-2 backdrop-blur sm:-mx-5 sm:px-5">
+      <div className="sticky top-14 z-20 -mx-3 bg-background px-3 pt-3 pb-2 sm:-mx-5 sm:px-5">
         <Segmented value={active} onChange={setTab} options={options} className="w-full sm:w-auto" />
       </div>
 

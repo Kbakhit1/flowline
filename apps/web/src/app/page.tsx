@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ClipboardList, Compass, CornerDownLeft, MoveRight } from "lucide-react";
+import { ArrowDown, ArrowUp, ClipboardList, Columns2, Compass, CornerDownLeft, MessageSquareReply, MoveRight } from "lucide-react";
 import { useMemo } from "react";
 import { useEngine } from "@/lib/engine/store";
 import { buildSeed } from "@/lib/engine/seed";
@@ -33,9 +33,9 @@ export default function Landing() {
   };
 
   const startTour = useTour((s) => s.start);
-  const tour = () => {
+  const tour = (id: "cycle" | "replies") => {
     resetDemo();
-    startTour();
+    startTour(id);
     router.push("/app");
   };
 
@@ -63,19 +63,47 @@ export default function Landing() {
           <h1 className="mt-3 text-balance text-3xl leading-[1.25] font-bold sm:text-4xl">{t.landing.title}</h1>
           <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">{t.landing.subtitle}</p>
 
-          <button
-            onClick={tour}
-            disabled={!hydrated}
-            className="mt-10 flex w-full items-center gap-4 rounded-2xl bg-primary p-4 text-start text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          <div className="mt-10 grid gap-3 sm:grid-cols-2">
+            <button
+              onClick={() => tour("cycle")}
+              disabled={!hydrated}
+              className="flex items-center gap-3 rounded-2xl bg-primary p-4 text-start text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+            >
+              <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/15">
+                <Compass className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">{t.tour.cycle.cta}</span>
+                <span className="block text-xs opacity-80">{t.tour.cycle.ctaText}</span>
+              </span>
+            </button>
+            <button
+              onClick={() => tour("replies")}
+              disabled={!hydrated}
+              className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-start transition-colors hover:bg-primary/10 disabled:opacity-60"
+            >
+              <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <MessageSquareReply className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">{t.tour.replies.cta}</span>
+                <span className="block text-xs text-muted-foreground">{t.tour.replies.ctaText}</span>
+              </span>
+            </button>
+          </div>
+
+          <Link
+            href="/split"
+            className="mt-3 flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-start transition-colors hover:border-primary/40"
           >
-            <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/15">
-              <Compass className="size-5" />
+            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Columns2 className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold">{t.tour.cta}</span>
-              <span className="block text-xs opacity-80">{t.tour.ctaText}</span>
+              <span className="block text-sm font-semibold">{t.split.cta}</span>
+              <span className="block text-xs text-muted-foreground">{t.split.ctaText}</span>
             </span>
-          </button>
+          </Link>
 
           <button
             onClick={blank}

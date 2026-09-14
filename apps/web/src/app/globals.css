@@ -201,7 +201,7 @@
 /* Thin, quiet scrollbars */
 .thin-scroll {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent) transparent;
+  scrollbar-color: rgba(128, 140, 134, 0.45) transparent;
 }
 
 /* Guided tour: the element the current step talks about */

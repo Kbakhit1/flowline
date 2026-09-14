@@ -59,7 +59,7 @@ const SAMPLE = {
 export function autofill(step: Step) {
   const st = useEngine.getState();
   const db = st.db;
-  const owner = db.users.find((u) => u.id === st.session.currentUserId) ?? db.users[0];
+  const owner = db.users.find((u) => u.id === (st.pinnedUserId ?? st.session.currentUserId)) ?? db.users[0];
   const byName = (name: string) => useEngine.getState().db.users.find((u) => u.name.ar === name);
   const deptByName = (name: string) => useEngine.getState().db.departments.find((d) => d.name.ar === name);
 
