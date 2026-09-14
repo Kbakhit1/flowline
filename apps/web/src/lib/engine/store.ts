@@ -14,6 +14,7 @@ import type {
   NotificationKind,
   NotificationTier,
   Priority,
+  ProjectPhase,
   Request,
   RequestLine,
   RequestStatus,
@@ -125,6 +126,7 @@ export interface EngineState {
   addDepartment: (name: string, supervisorId: string) => string;
   updateDepartment: (id: string, patch: { name?: string; supervisorId?: string }) => void;
   addProject: (input: NewProjectInput) => string;
+  updateProject: (id: string, patch: Partial<NewProjectInput>) => void;
   addRequestType: (input: NewTypeInput) => string;
   resetDemo: () => void;
   startBlank: () => void;
@@ -133,7 +135,7 @@ export interface EngineState {
 export interface NewProjectInput {
   name: string;
   client: string;
-  phase: "study" | "execution";
+  phase: ProjectPhase;
   managerId: string;
   siteSupervisorId: string;
   memberIds: string[];
@@ -344,7 +346,8 @@ export const useEngine = create<EngineState>()(
             const deadline =
               input.deadline ??
               addDeadlineDays(new Date(created), type.routing.defaultDeadlineDays, db.company.settings).toISOString();
-            const seq = db.requests.length + 1048;
+            // next top-level number: after the highest one in use, from REQ-1001 in a fresh company
+            const seq = db.requests.reduce((m, r) => Math.max(m, Number(/^REQ-(\d+)$/.exec(r.ref)?.[1] ?? 0)), 1000) + 1;
             const parent = input.parentId ? reqOf(db, input.parentId) : undefined;
             const ref = parent
               ? `${parent.ref}-${db.requests.filter((r) => r.parentId === parent.id).length + 1}`
@@ -730,6 +733,25 @@ export const useEngine = create<EngineState>()(
           set((st) => ({ session: { ...st.session, projectId: id } }));
           return id;
         },
+
+        updateProject: (id, patch) =>
+          mutate((db) => {
+            db.projects = db.projects.map((p) => {
+              if (p.id !== id) return p;
+              const next = {
+                ...p,
+                ...(patch.name !== undefined ? { name: same(patch.name.trim()) } : {}),
+                ...(patch.client !== undefined ? { client: same(patch.client.trim()) } : {}),
+                ...(patch.phase !== undefined ? { phase: patch.phase } : {}),
+                ...(patch.managerId !== undefined ? { managerId: patch.managerId } : {}),
+                ...(patch.siteSupervisorId !== undefined ? { siteSupervisorId: patch.siteSupervisorId } : {}),
+                ...(patch.memberIds !== undefined ? { memberIds: patch.memberIds } : {}),
+              };
+              // the manager and the site supervisor are always members
+              next.memberIds = Array.from(new Set([...next.memberIds, next.managerId, next.siteSupervisorId]));
+              return next;
+            });
+          }),
 
         addRequestType: (input) => {
           const id = `t_${uid()}`;

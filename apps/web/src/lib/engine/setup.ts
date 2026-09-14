@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { useEngine, selectMe } from "./store";
+import { create } from "zustand";
+import { useEngine, selectMe, type ComposerDraft } from "./store";
 
 export const STEPS = ["company", "departments", "people", "project", "types", "first"] as const;
 export type Step = (typeof STEPS)[number];
@@ -29,6 +30,12 @@ export function useSetupStatus() {
   }, [company, users, departments, projects, types, requests, me]);
 }
 
+/** The first-bubble draft the sheet hands to its composer (filled by autofill, cleared on send). Not persisted. */
+export const useSetupDraft = create<{ draft: ComposerDraft | null; setDraft: (d: ComposerDraft | null) => void }>()((set) => ({
+  draft: null,
+  setDraft: (draft) => set({ draft }),
+}));
+
 /* ---------- sample data for the "fill automatically" buttons ---------- */
 
 const SAMPLE = {
@@ -55,8 +62,12 @@ const SAMPLE = {
   first: { text: "إعداد جدول التنفيذ الأسبوعي وإرساله قبل الخميس", to: "م. سلمان الحربي" },
 };
 
-/** Fills one step of the sheet with sample data. Safe to call more than once: it only adds what is missing. */
-export function autofill(step: Step) {
+/**
+ * Fills one step of the sheet with sample data. Safe to call more than once: it only adds what is missing.
+ * "fields" (the step button) fills what the user sees and leaves the sending to them;
+ * "commit" (fill the whole sheet) finishes the step outright.
+ */
+export function autofill(step: Step, mode: "fields" | "commit" = "fields") {
   const st = useEngine.getState();
   const db = st.db;
   const owner = db.users.find((u) => u.id === (st.pinnedUserId ?? st.session.currentUserId)) ?? db.users[0];
@@ -90,9 +101,15 @@ export function autofill(step: Step) {
       return;
     }
     case "project": {
-      if (useEngine.getState().db.projects.length) return;
       autofill("people");
       const cur = useEngine.getState();
+      const current = cur.db.projects.find((p) => p.id === cur.session.projectId) ?? cur.db.projects[0];
+      if (current) {
+        // the form is bound to this project, so only its empty fields get sample values
+        if (!current.client.ar.trim()) cur.updateProject(current.id, { client: SAMPLE.project.client });
+        if (cur.session.projectId !== current.id) cur.setProject(current.id);
+        return;
+      }
       const members = cur.db.users.filter((u) => u.active).map((u) => u.id);
       cur.addProject({
         name: SAMPLE.project.name,
@@ -114,12 +131,12 @@ export function autofill(step: Step) {
     case "first": {
       autofill("project");
       const cur = useEngine.getState();
-      if (cur.db.requests.length) return;
-      const to = byName(SAMPLE.first.to) ?? cur.db.users.find((u) => u.id !== owner.id);
+      const to = byName(SAMPLE.first.to) ?? cur.db.users.find((u) => u.id !== owner.id && u.active);
       if (!to || !cur.session.projectId) return;
-      cur.createRequest({
+      const taskType = cur.db.requestTypes.find((t) => t.id === "t_task") ?? cur.db.requestTypes[0];
+      const draft: ComposerDraft = {
         projectId: cur.session.projectId,
-        typeId: "t_task",
+        typeId: taskType.id,
         text: SAMPLE.first.text,
         recipientId: to.id,
         priority: "normal",
@@ -129,12 +146,20 @@ export function autofill(step: Step) {
         lineId: null,
         returnToId: null,
         fromMessageId: null,
-      });
+      };
+      if (mode === "fields") {
+        // put the bubble in front of the user; pressing "send" is the point of the step
+        if (!useSetupDraft.getState().draft?.text.trim()) useSetupDraft.getState().setDraft(draft);
+        return;
+      }
+      if (cur.db.requests.length) return;
+      cur.createRequest(draft);
+      useSetupDraft.getState().setDraft(null);
       return;
     }
   }
 }
 
 export function autofillAll() {
-  for (const s of STEPS) autofill(s);
+  for (const s of STEPS) autofill(s, "commit");
 }

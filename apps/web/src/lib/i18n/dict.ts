@@ -79,6 +79,8 @@ export const dict = {
         site: "مشرف الموقع",
         members: "الأعضاء",
         add: "إنشاء المشروع",
+        another: "مشروع آخر",
+        cancelNew: "إلغاء",
         list: "المشاريع",
       },
       types: {
@@ -89,6 +91,7 @@ export const dict = {
       first: {
         hint: "اكتب أول مهمة وأرسلها إلى أحد أفراد فريقك. ستجدها في «المرسلة»، وسيجدها هو في «لديّ».",
         sent: "تم الإرسال. اكتملت الورقة.",
+        sentDetail: "«{text}» إلى {name}",
         goInbox: "إلى الفقاعات",
         goTree: "عرض الهيكل",
       },
@@ -554,6 +557,8 @@ export const dict = {
         site: "Site supervisor",
         members: "Members",
         add: "Create project",
+        another: "Another project",
+        cancelNew: "Cancel",
         list: "Projects",
       },
       types: {
@@ -564,6 +569,7 @@ export const dict = {
       first: {
         hint: "Write the first task and send it to someone on your team. You will find it under “Sent”; they will find it under “Mine”.",
         sent: "Sent. The sheet is complete.",
+        sentDetail: "“{text}” to {name}",
         goInbox: "Go to bubbles",
         goTree: "See the tree",
       },

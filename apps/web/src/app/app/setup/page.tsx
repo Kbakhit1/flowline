@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "cn";
 import { Check, ChevronLeft, ChevronRight, Plus, Printer, Wand2 } from "lucide-react";
 import Link from "next/link";
-import type { RequestType, User } from "@/lib/engine/types";
+import type { Project, RequestType, User } from "@/lib/engine/types";
 import { useEngine, selectMe } from "@/lib/engine/store";
 import { useT, useFmt, fill } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { PersonAvatar, SectionTitle } from "@/components/common";
 import { AddPersonDialog, AddTypeDialog } from "@/components/bubbles/pickers";
 import { Composer } from "@/components/bubbles/composer";
 
-import { STEPS, autofill, autofillAll, useSetupStatus, type Step } from "@/lib/engine/setup";
+import { STEPS, autofill, autofillAll, useSetupDraft, useSetupStatus, type Step } from "@/lib/engine/setup";
 
 const inputCls =
   "h-9 w-full rounded-md border bg-transparent px-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
@@ -259,88 +259,173 @@ function PeopleStep() {
 
 /* ---------- 4. project ---------- */
 
+/** Bound to the current project once one exists (so autofill and edits show in the fields); a create form before that. */
 function ProjectStep() {
-  const { t, tl } = useT();
-  const users = useEngine((s) => s.db.users);
   const projects = useEngine((s) => s.db.projects);
-  const me = useEngine(selectMe);
-  const addProject = useEngine((s) => s.addProject);
-  const active = users.filter((u) => u.active);
-  const [name, setName] = useState("");
-  const [client, setClient] = useState("");
-  const [phase, setPhase] = useState<"study" | "execution">("execution");
-  const [manager, setManager] = useState(me.id);
-  const [site, setSite] = useState(active[1]?.id ?? me.id);
-  const [members, setMembers] = useState<string[]>(() => active.map((u) => u.id));
-  const toggle = (id: string) => setMembers((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
-  const add = () => {
-    if (!name.trim()) return;
-    addProject({ name, client, phase, managerId: manager, siteSupervisorId: site, memberIds: members });
-    setName("");
-    setClient("");
-  };
+  const projectId = useEngine((s) => s.session.projectId);
+  const current = projects.find((p) => p.id === projectId) ?? projects[0] ?? null;
+  const [creating, setCreating] = useState(false);
+  if (current && !creating) return <ProjectForm project={current} onAnother={() => setCreating(true)} />;
+  return <ProjectCreate onDone={() => setCreating(false)} onCancel={current ? () => setCreating(false) : undefined} />;
+}
+
+type ProjectValue = { name: string; client: string; phase: Project["phase"]; managerId: string; siteSupervisorId: string; memberIds: string[] };
+
+function ProjectFields({
+  value,
+  users,
+  onChange,
+  autoFocus,
+}: {
+  value: ProjectValue;
+  users: User[];
+  onChange: (patch: Partial<ProjectValue>) => void;
+  autoFocus?: boolean;
+}) {
+  const { t, tl } = useT();
+  const toggle = (id: string) =>
+    onChange({ memberIds: value.memberIds.includes(id) ? value.memberIds.filter((x) => x !== id) : [...value.memberIds, id] });
   return (
-    <div className="grid gap-3">
-      <Hint>{t.setup.project.hint}</Hint>
+    <>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t.setup.project.name}>
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
+          <input autoFocus={autoFocus} value={value.name} onChange={(e) => onChange({ name: e.target.value })} className={inputCls} />
         </Field>
         <Field label={t.setup.project.client}>
-          <input value={client} onChange={(e) => setClient(e.target.value)} className={inputCls} />
+          <input value={value.client} onChange={(e) => onChange({ client: e.target.value })} className={inputCls} />
         </Field>
         <Field label={t.setup.project.phase}>
-          <select value={phase} onChange={(e) => setPhase(e.target.value as "study" | "execution")} className={inputCls}>
+          <select value={value.phase} onChange={(e) => onChange({ phase: e.target.value as Project["phase"] })} className={inputCls}>
             <option value="study">{t.dashboard.phase.study}</option>
             <option value="execution">{t.dashboard.phase.execution}</option>
+            <option value="closed">{t.dashboard.phase.closed}</option>
           </select>
         </Field>
         <Field label={t.setup.project.manager}>
-          <PersonSelect users={active} value={manager} onChange={setManager} />
+          <PersonSelect users={users} value={value.managerId} onChange={(id) => onChange({ managerId: id })} />
         </Field>
         <Field label={t.setup.project.site}>
-          <PersonSelect users={active} value={site} onChange={setSite} />
+          <PersonSelect users={users} value={value.siteSupervisorId} onChange={(id) => onChange({ siteSupervisorId: id })} />
         </Field>
       </div>
       <div>
         <div className="mb-1 text-xs text-muted-foreground">{t.setup.project.members}</div>
         <div className="flex flex-wrap gap-1.5">
-          {active.map((u) => (
-            <button
-              key={u.id}
-              type="button"
-              onClick={() => toggle(u.id)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs",
-                members.includes(u.id) ? "border-primary/40 bg-primary/10 text-primary" : "text-muted-foreground",
-              )}
-            >
-              <PersonAvatar user={u} size={16} />
-              {tl(u.name) || t.common.you}
-            </button>
-          ))}
+          {users.map((u) => {
+            const locked = u.id === value.managerId || u.id === value.siteSupervisorId;
+            const on = value.memberIds.includes(u.id) || locked;
+            return (
+              <button
+                key={u.id}
+                type="button"
+                disabled={locked}
+                onClick={() => toggle(u.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs",
+                  on ? "border-primary/40 bg-primary/10 text-primary" : "text-muted-foreground",
+                )}
+              >
+                <PersonAvatar user={u} size={16} />
+                {tl(u.name) || t.common.you}
+              </button>
+            );
+          })}
         </div>
       </div>
-      <div>
-        <Button onClick={add} disabled={!name.trim()}>
-          <Plus className="size-4" />
-          {t.setup.project.add}
+    </>
+  );
+}
+
+function ProjectForm({ project, onAnother }: { project: Project; onAnother: () => void }) {
+  const { t, tl } = useT();
+  const users = useEngine((s) => s.db.users);
+  const projects = useEngine((s) => s.db.projects);
+  const updateProject = useEngine((s) => s.updateProject);
+  const setProject = useEngine((s) => s.setProject);
+  const active = users.filter((u) => u.active);
+  return (
+    <div className="grid gap-3">
+      <Hint>{t.setup.project.hint}</Hint>
+      <ProjectFields
+        users={active}
+        value={{
+          name: project.name.ar,
+          client: project.client.ar,
+          phase: project.phase,
+          managerId: project.managerId,
+          siteSupervisorId: project.siteSupervisorId,
+          memberIds: project.memberIds,
+        }}
+        onChange={(patch) => updateProject(project.id, patch)}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-mono text-[10px] text-muted-foreground">{project.ref}</span>
+        <Button size="sm" variant="outline" className="ms-auto" onClick={onAnother}>
+          <Plus className="size-3.5" />
+          {t.setup.project.another}
         </Button>
       </div>
-      {projects.length > 0 && (
+      {projects.length > 1 && (
         <>
           <SectionTitle count={projects.length}>{t.setup.project.list}</SectionTitle>
           <ul className="flex flex-col gap-1">
             {projects.map((p) => (
-              <li key={p.id} className="rounded-xl border bg-background px-3 py-2 text-sm">
-                <span className="font-medium">{tl(p.name)}</span>
-                <span className="ms-2 font-mono text-[10px] text-muted-foreground">{p.ref}</span>
-                {p.client.ar && <span className="ms-2 text-xs text-muted-foreground">· {tl(p.client)}</span>}
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => setProject(p.id)}
+                  className={cn(
+                    "flex w-full items-center rounded-xl border bg-background px-3 py-2 text-start text-sm",
+                    p.id === project.id ? "border-primary/50" : "hover:border-primary/30",
+                  )}
+                >
+                  <span className="font-medium">{tl(p.name)}</span>
+                  <span className="ms-2 font-mono text-[10px] text-muted-foreground">{p.ref}</span>
+                  {p.client.ar && <span className="ms-2 text-xs text-muted-foreground">· {tl(p.client)}</span>}
+                </button>
               </li>
             ))}
           </ul>
         </>
       )}
+    </div>
+  );
+}
+
+function ProjectCreate({ onDone, onCancel }: { onDone: () => void; onCancel?: () => void }) {
+  const { t } = useT();
+  const users = useEngine((s) => s.db.users);
+  const me = useEngine(selectMe);
+  const addProject = useEngine((s) => s.addProject);
+  const active = users.filter((u) => u.active);
+  const [v, setV] = useState<ProjectValue>({
+    name: "",
+    client: "",
+    phase: "execution",
+    managerId: me.id,
+    siteSupervisorId: active[1]?.id ?? me.id,
+    memberIds: active.map((u) => u.id),
+  });
+  const add = () => {
+    if (!v.name.trim()) return;
+    addProject(v);
+    onDone();
+  };
+  return (
+    <div className="grid gap-3">
+      <Hint>{t.setup.project.hint}</Hint>
+      <ProjectFields autoFocus users={active} value={v} onChange={(patch) => setV((x) => ({ ...x, ...patch }))} />
+      <div className="flex items-center gap-2">
+        <Button onClick={add} disabled={!v.name.trim()}>
+          <Plus className="size-4" />
+          {t.setup.project.add}
+        </Button>
+        {onCancel && (
+          <Button variant="ghost" onClick={onCancel}>
+            {t.setup.project.cancelNew}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -394,23 +479,32 @@ function TypesStep() {
 /* ---------- 6. first bubble ---------- */
 
 function FirstStep() {
-  const { t } = useT();
+  const { t, tl } = useT();
   const router = useRouter();
   const requests = useEngine((s) => s.db.requests);
   const projectId = useEngine((s) => s.session.projectId);
   const users = useEngine((s) => s.db.users);
+  const draft = useSetupDraft((s) => s.draft);
+  const setDraft = useSetupDraft((s) => s.setDraft);
   const ready = !!projectId && users.filter((u) => u.active).length >= 2;
+  const first = requests[0];
+  const firstTo = first ? users.find((u) => u.id === first.ownerId) : null;
   return (
     <div className="grid gap-3">
       <Hint>{t.setup.first.hint}</Hint>
       {!projectId && <p className="text-xs text-stage-wait">{t.landing.noProject}</p>}
       {projectId && users.filter((u) => u.active).length < 2 && <p className="text-xs text-stage-wait">{t.setup.people.need}</p>}
-      {ready && <Composer />}
-      {requests.length > 0 && (
+      {ready && <Composer initial={draft} onDone={() => setDraft(null)} />}
+      {first && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl bg-stage-done-soft px-3 py-2 text-sm text-stage-done">
-          <Check className="size-4" />
-          {t.setup.first.sent}
-          <span className="ms-auto flex gap-1.5">
+          <Check className="size-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            {t.setup.first.sent}
+            <span className="block truncate text-xs opacity-80">
+              {fill(t.setup.first.sentDetail, { text: tl(first.text), name: firstTo ? tl(firstTo.name) || t.common.you : "" })}
+            </span>
+          </span>
+          <span className="flex gap-1.5">
             <Button size="xs" variant="outline" onClick={() => router.push("/app")}>{t.setup.first.goInbox}</Button>
             <Button size="xs" variant="outline" onClick={() => router.push("/app/tree")}>{t.setup.first.goTree}</Button>
           </span>
