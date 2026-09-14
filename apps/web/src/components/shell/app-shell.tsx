@@ -12,6 +12,7 @@ import { Logo, LogoLockup } from "@/components/logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -203,17 +204,19 @@ function ProjectPicker({ compact = false }: { compact?: boolean }) {
         <ChevronDown className="size-3.5 opacity-60" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>{t.inbox.project}</DropdownMenuLabel>
-        {mine.map((p) => (
-          <DropdownMenuItem key={p.id} onClick={() => setProject(p.id)} className={cn(p.id === current?.id && "bg-accent")}>
-            <span className="flex flex-col">
-              <span className="text-sm">{tl(p.name)}</span>
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {p.ref} · {t.dashboard.phase[p.phase]}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t.inbox.project}</DropdownMenuLabel>
+          {mine.map((p) => (
+            <DropdownMenuItem key={p.id} onClick={() => setProject(p.id)} className={cn(p.id === current?.id && "bg-accent")}>
+              <span className="flex flex-col">
+                <span className="text-sm">{tl(p.name)}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {p.ref} · {t.dashboard.phase[p.phase]}
+                </span>
               </span>
-            </span>
-          </DropdownMenuItem>
-        ))}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -235,19 +238,21 @@ function PersonaMenu() {
         <ChevronDown className="size-3.5 opacity-60" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-h-[70vh] w-64 overflow-y-auto thin-scroll">
-        <DropdownMenuLabel>{t.settings.viewAs}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {users.map((u) => (
-          <DropdownMenuItem key={u.id} onClick={() => setCurrentUser(u.id)} className={cn("gap-2", u.id === me.id && "bg-accent")}>
-            <PersonAvatar user={u} size={24} />
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate text-sm">{tl(u.name)}</span>
-              <span className="truncate text-[10px] text-muted-foreground">
-                {tl(u.title)} · {t.roles[u.role]}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t.settings.viewAs}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {users.map((u) => (
+            <DropdownMenuItem key={u.id} onClick={() => setCurrentUser(u.id)} className={cn("gap-2", u.id === me.id && "bg-accent")}>
+              <PersonAvatar user={u} size={24} />
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate text-sm">{tl(u.name)}</span>
+                <span className="truncate text-[10px] text-muted-foreground">
+                  {tl(u.title)} · {t.roles[u.role]}
+                </span>
               </span>
-            </span>
-          </DropdownMenuItem>
-        ))}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
