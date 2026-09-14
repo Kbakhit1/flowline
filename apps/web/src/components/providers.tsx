@@ -24,7 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       setHydrated(true);
     });
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/sw.js`).catch(() => {});
     }
   }, []);
 

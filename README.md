@@ -12,6 +12,13 @@ npm run build        # static export في apps/web/out
 npm run deploy       # next build + wrangler deploy (محتاج حساب Cloudflare)
 ```
 
+## الديمو أونلاين
+
+GitHub Pages بيبني الديمو تلقائياً مع كل push على `main`:
+https://kbakhit1.github.io/mirsal/
+
+(الـ workflow في `.github/workflows/pages.yml`، والمسار `/mirsal` بيتظبط بـ `NEXT_PUBLIC_BASE_PATH`.)
+
 ## الشكل العام
 
 ```

@@ -1,6 +1,7 @@
 /* Minimal app-shell cache: the demo opens offline after the first visit. */
 const CACHE = "mirsal-demo-v1";
-self.addEventListener("install", (e) => {
+const SHELL = new URL("app/", self.registration.scope).href;
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 self.addEventListener("activate", (e) => {
@@ -17,6 +18,6 @@ self.addEventListener("fetch", (e) => {
         caches.open(CACHE).then((c) => c.put(req, copy));
         return res;
       })
-      .catch(() => caches.match(req).then((hit) => hit || (req.mode === "navigate" ? caches.match("/app/") : undefined)))
+      .catch(() => caches.match(req).then((hit) => hit || (req.mode === "navigate" ? caches.match(SHELL) : undefined)))
   );
 });

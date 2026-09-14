@@ -17,12 +17,14 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const bp = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const metadata: Metadata = {
   title: "مِرسال · Mirsal",
   description: "كل طلب في الشركة فقاعة واحدة. تنزل للفريق، وترجع بخبر.",
-  manifest: "/manifest.json",
+  manifest: `${bp}/manifest.webmanifest`,
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Mirsal" },
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  icons: { icon: `${bp}/icon.svg`, apple: `${bp}/icon.svg` },
 };
 
 export const viewport: Viewport = {
