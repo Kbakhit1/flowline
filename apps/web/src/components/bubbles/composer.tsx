@@ -287,7 +287,7 @@ export function ComposerSheet() {
   const open = !!draft;
   return (
     <Sheet open={open} onOpenChange={(o) => !o && setComposer(null)} modal={false}>
-      <SheetContent side={desktop ? (locale === "ar" ? "left" : "right") : "bottom"} className="gap-0 overflow-y-auto p-4 sm:max-w-md">
+      <SheetContent side={desktop ? (locale === "ar" ? "left" : "right") : "bottom"} className="gap-0 overflow-y-auto p-4 sm:max-w-md data-[side=bottom]:max-h-[85dvh]">
         <SheetTitle className="mb-3 text-base">{draft?.parentId ? t.action.subrequest : t.nav.inbox}</SheetTitle>
         {draft && <Composer initial={draft} autoFocus onDone={() => setComposer(null)} />}
       </SheetContent>

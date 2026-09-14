@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "cn";
-import { Check, ChevronLeft, ChevronRight, Play, X } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Play, X } from "lucide-react";
 import { useEngine } from "@/lib/engine/store";
 import { STEP_SPECS, TOUR_STEPS, discoverRoot, useTour, type TourStepId } from "@/lib/engine/tour";
 import { useT, useFmt, fill } from "@/lib/i18n";
@@ -32,6 +32,27 @@ export function Tour() {
 
   const stepId: TourStepId = TOUR_STEPS[index];
   const spec = STEP_SPECS[stepId];
+  // phones get a compact card; the instructions unfold on tap
+  const [expanded, setExpanded] = useState(true);
+  useEffect(() => setExpanded(index === 0), [index]);
+
+  // phones: content is pushed down by the card height so nothing hides under it
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!active) {
+      root.style.removeProperty("--tour-h");
+      return;
+    }
+    const el = cardRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => root.style.setProperty("--tour-h", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--tour-h");
+    };
+  }, [active]);
 
   // pick up the request even when the user created it by hand
   useEffect(() => {
@@ -87,8 +108,9 @@ export function Tour() {
 
   return (
     <div
+      ref={cardRef}
       onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-x-2 top-[4.25rem] z-[70] rounded-2xl border border-primary/40 bg-card p-3.5 shadow-2xl md:inset-x-auto md:top-auto md:bottom-4 md:start-4 md:w-[380px]"
+      className="fixed inset-x-2 top-[3.9rem] z-[70] rounded-2xl border border-primary/40 bg-card p-2.5 shadow-2xl md:inset-x-auto md:top-auto md:bottom-4 md:start-4 md:w-[380px] md:p-3.5"
       role="dialog"
       aria-label={t.tour.title}
     >
@@ -109,10 +131,15 @@ export function Tour() {
         </button>
       </div>
 
-      <h3 className="mt-2 text-sm font-bold">{copy.title}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{copy.text}</p>
+      <button type="button" onClick={() => setExpanded((v) => !v)} className="mt-1.5 flex w-full items-start gap-2 text-start md:mt-2 md:cursor-default">
+        <span className="min-w-0 flex-1">
+          <h3 className="text-[13px] font-bold md:text-sm">{copy.title}</h3>
+          <p className={cn("mt-0.5 text-[11px] leading-relaxed text-muted-foreground md:mt-1 md:text-xs", !expanded && "line-clamp-1 md:line-clamp-none")}>{copy.text}</p>
+        </span>
+        <span className="mt-0.5 text-muted-foreground md:hidden">{expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}</span>
+      </button>
 
-      <div className="mt-3 flex items-center gap-1.5">
+      <div className="mt-2 flex items-center gap-1.5 md:mt-3">
         <Button variant="ghost" size="sm" onClick={prev} disabled={index === 0}>
           <ChevronRight className="size-3.5 ltr:hidden" />
           <ChevronLeft className="size-3.5 rtl:hidden" />

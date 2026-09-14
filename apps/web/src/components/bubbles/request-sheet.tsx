@@ -8,6 +8,7 @@ import type { AuditEntry, Request, RequestLine, User } from "@/lib/engine/types"
 import { durationMs, isLate, isOpen, lineProgress, permittedActions, stageOf, type RequestAction } from "@/lib/engine/rules";
 import { useEngine, selectMe } from "@/lib/engine/store";
 import { useIsDesktop, useNow, usePeople, useUser } from "@/lib/engine/hooks";
+import { useTour } from "@/lib/engine/tour";
 import { useT, useFmt, useLocale, fill } from "@/lib/i18n";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -21,11 +22,19 @@ export function RequestSheet() {
   const r = useEngine((s) => (id ? s.db.requests.find((x) => x.id === id) ?? null : null));
   const desktop = useIsDesktop();
   const locale = useLocale();
+  const touring = useTour((s) => s.active);
   return (
     <Sheet open={!!r} onOpenChange={(o) => !o && openRequest(null)} modal={false}>
       <SheetContent
         side={desktop ? (locale === "ar" ? "left" : "right") : "bottom"}
-        className={cn("gap-0 overflow-y-auto p-0 thin-scroll", desktop ? "data-[side=left]:sm:max-w-lg data-[side=right]:sm:max-w-lg" : "h-[92dvh] rounded-t-2xl")}
+        className={cn(
+          "gap-0 overflow-y-auto p-0 thin-scroll",
+          desktop
+            ? "data-[side=left]:sm:max-w-lg data-[side=right]:sm:max-w-lg"
+            : touring
+              ? "rounded-t-2xl data-[side=bottom]:h-[68dvh]"
+              : "rounded-t-2xl data-[side=bottom]:h-[92dvh]",
+        )}
       >
         {r && <RequestDetail r={r} key={r.id} />}
       </SheetContent>

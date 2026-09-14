@@ -211,6 +211,9 @@
   border-radius: 16px;
   animation: tour-pulse 1.6s ease-in-out infinite;
 }
+@media (max-width: 767px) {
+  .tour-pad { padding-top: calc(var(--tour-h, 0px) + 12px); }
+}
 @keyframes tour-pulse {
   0%, 100% { outline-color: var(--primary); }
   50% { outline-color: color-mix(in oklch, var(--primary) 35%, transparent); }
