@@ -110,7 +110,7 @@ export function Tour() {
     <div
       ref={cardRef}
       onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-x-2 top-[3.9rem] z-[70] rounded-2xl border border-primary/40 bg-card p-2.5 shadow-2xl md:inset-x-auto md:top-auto md:bottom-4 md:start-4 md:w-[380px] md:p-3.5"
+      className="fixed inset-x-2 top-[3.9rem] z-[70] rounded-2xl border border-primary/40 bg-card p-2.5 shadow-2xl md:inset-x-auto md:top-auto md:bottom-4 md:start-4 md:w-[276px] md:p-3"
       role="dialog"
       aria-label={t.tour.title}
     >

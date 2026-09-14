@@ -4,6 +4,36 @@ import { create } from "zustand";
 import type { DbSnapshot, Request } from "./types";
 import { useEngine } from "./store";
 
+/** Texts the tour writes on the user's behalf, in the UI language. */
+const COPY = {
+  ar: {
+    request: "15 عاملاً لأعمال التشطيب في الدور الثالث، ابتداءً من الأحد",
+    approve: "معتمد. التنسيق مع مشرف الموقع على موعد الحضور.",
+    subA: "10 عمال من المقاول الفرعي الأمانة، تأكيد الحضور يوم الأحد",
+    subB: "5 عمال من شركة التوريد المتحدة",
+    complete: "تم التأكيد، العمال في الموقع يوم الأحد.",
+    finish: "تم توفير 15 عاملاً كاملاً من مصدرين.",
+  },
+  en: {
+    request: "15 workers for finishing works on the 3rd floor, starting Sunday",
+    approve: "Approved. Coordinate the arrival date with the site supervisor.",
+    subA: "10 workers from Al-Amana subcontractor, confirm attendance for Sunday",
+    subB: "5 workers from United Supply",
+    complete: "Confirmed, the workers are on site on Sunday.",
+    finish: "All 15 workers provided from two sources.",
+  },
+} as const;
+
+function copy() {
+  try {
+    const raw = localStorage.getItem("flowline-ui-v1");
+    const locale = raw ? (JSON.parse(raw)?.state?.locale as "ar" | "en" | undefined) : undefined;
+    return COPY[locale === "en" ? "en" : "ar"];
+  } catch {
+    return COPY.ar;
+  }
+}
+
 /**
  * Guided tour: one request travels the whole cycle. Every step names the persona,
  * where to be, what to press — and can also perform the action itself. Completion
@@ -113,7 +143,7 @@ export const STEP_SPECS: Record<TourStepId, StepSpec> = {
       const id = st.createRequest({
         projectId: "p1",
         typeId: "t_labor",
-        text: "15 عاملاً لأعمال التشطيب في الدور الثالث، ابتداءً من الأحد",
+        text: copy().request,
         recipientId: null,
         priority: "urgent",
         deadline: null,
@@ -138,7 +168,7 @@ export const STEP_SPECS: Record<TourStepId, StepSpec> = {
     run: (refs) => {
       const st = useEngine.getState();
       st.setCurrentUser(CAST.pm);
-      if (refs.rootId) st.approve(refs.rootId, "معتمد. التنسيق مع مشرف الموقع على موعد الحضور.");
+      if (refs.rootId) st.approve(refs.rootId, copy().approve);
     },
   },
   split: {
@@ -164,8 +194,8 @@ export const STEP_SPECS: Record<TourStepId, StepSpec> = {
         returnToId: CAST.laborSup,
         fromMessageId: null,
       };
-      const a = st.createRequest({ ...base, text: "10 عمال من المقاول الفرعي الأمانة، تأكيد الحضور يوم الأحد" });
-      const b = useEngine.getState().createRequest({ ...base, text: "5 عمال من شركة التوريد المتحدة" });
+      const a = st.createRequest({ ...base, text: copy().subA });
+      const b = useEngine.getState().createRequest({ ...base, text: copy().subB });
       useTour.getState().setRefs({ subIds: [a, b] });
     },
   },
@@ -183,7 +213,7 @@ export const STEP_SPECS: Record<TourStepId, StepSpec> = {
       st.setCurrentUser(CAST.coordinator);
       for (const id of kids(st.db, refs.rootId).map((k) => k.id)) {
         const r = req(useEngine.getState().db, id);
-        if (r && (r.status === "approved" || r.status === "in_progress")) useEngine.getState().complete(id, "تم التأكيد، العمال في الموقع يوم الأحد.");
+        if (r && (r.status === "approved" || r.status === "in_progress")) useEngine.getState().complete(id, copy().complete);
       }
     },
   },
@@ -217,7 +247,7 @@ export const STEP_SPECS: Record<TourStepId, StepSpec> = {
     run: (refs) => {
       const st = useEngine.getState();
       st.setCurrentUser(CAST.laborSup);
-      if (refs.rootId) st.complete(refs.rootId, "تم توفير 15 عاملاً كاملاً من مصدرين.");
+      if (refs.rootId) st.complete(refs.rootId, copy().finish);
     },
   },
   close: {
