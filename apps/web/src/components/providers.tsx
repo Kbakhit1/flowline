@@ -3,6 +3,7 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { DemoErrorBoundary } from "@/components/error-boundary";
 import { useEngine } from "@/lib/engine/store";
 import { useUi } from "@/lib/i18n";
 
@@ -37,7 +38,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <TooltipProvider>
-        <HydratedCtx.Provider value={hydrated}>{children}</HydratedCtx.Provider>
+        <HydratedCtx.Provider value={hydrated}>
+          <DemoErrorBoundary>{children}</DemoErrorBoundary>
+        </HydratedCtx.Provider>
       </TooltipProvider>
     </ThemeProvider>
   );

@@ -44,7 +44,12 @@ export default function TreePage() {
 
   // the lines view opens on the richest chain so the go/return idea is visible at once
   useEffect(() => {
-    if (view !== "lines" || flowSel) return;
+    if (view !== "lines") return;
+    if (flowSel && !flowRequests.some((r) => r.id === flowSel)) {
+      setFlowSel(null);
+      return;
+    }
+    if (flowSel) return;
     const roots = flowRequests.filter((r) => !r.parentId);
     const best = roots
       .map((r) => ({ r, n: flowRequests.filter((x) => x.parentId === r.id).length }))

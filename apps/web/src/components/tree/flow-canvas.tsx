@@ -185,13 +185,16 @@ function layoutFlow(requests: Request[], rtl: boolean): Map<string, { x: number;
   const g = new Graph();
   g.setGraph({ rankdir: "LR", nodesep: 22, ranksep: 70, marginx: 10, marginy: 10 });
   g.setDefaultEdgeLabel(() => ({}));
+  const ids = new Set(requests.map((r) => r.id));
+  // a child whose parent is filtered out behaves as a root of its own
+  const isRoot = (r: Request) => !r.parentId || !ids.has(r.parentId);
   for (const r of requests) {
     g.setNode(r.id, { width: NODE_W, height: NODE_H });
-    if (!r.parentId) g.setNode(`start-${r.id}`, { width: START_W, height: START_H + 16 });
+    if (isRoot(r)) g.setNode(`start-${r.id}`, { width: START_W, height: START_H + 16 });
   }
   for (const r of requests) {
-    if (r.parentId) g.setEdge(r.parentId, r.id);
-    else g.setEdge(`start-${r.id}`, r.id);
+    if (isRoot(r)) g.setEdge(`start-${r.id}`, r.id);
+    else g.setEdge(r.parentId as string, r.id);
   }
   layout(g);
   let maxX = 0;
@@ -237,9 +240,11 @@ function Canvas({
     const litRoot = selectedId ? rootOf(requests, selectedId) : null;
     const dimNode = (id: string) => !!lit && !lit.has(id);
 
+    const ids = new Set(requests.map((r) => r.id));
+    const isRoot = (r: Request) => !r.parentId || !ids.has(r.parentId);
     const nodes: FlowNode[] = [];
     for (const r of requests) {
-      if (!r.parentId) {
+      if (isRoot(r)) {
         nodes.push({
           id: `start-${r.id}`,
           type: "start",
@@ -283,8 +288,8 @@ function Canvas({
     const labelStyle = { fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "inherit" } as const;
     const labelBg = { fill: "var(--card)", fillOpacity: 0.95 } as const;
     for (const r of requests) {
-      const source = r.parentId ?? `start-${r.id}`;
-      const inChain = lit ? lit.has(r.id) && (r.parentId ? lit.has(r.parentId) : litRoot === r.id) : false;
+      const source = isRoot(r) ? `start-${r.id}` : (r.parentId as string);
+      const inChain = lit ? lit.has(r.id) && (isRoot(r) ? litRoot === r.id || lit.has(r.id) : lit.has(r.parentId as string)) : false;
       const dim = !!lit && !inChain;
       const returned = r.status === "closed" || r.status === "complete";
       const stopped = r.status === "cancelled" || r.status === "rejected";
@@ -344,8 +349,11 @@ function Canvas({
       fitView({ padding: 0.1, duration: 300, maxZoom: 1 });
       return;
     }
-    const ids = [...chainOf(requests, selectedId)];
-    ids.push(`start-${rootOf(requests, selectedId)}`);
+    const known = new Set(requests.map((r) => r.id));
+    const ids = [...chainOf(requests, selectedId)].filter((id) => known.has(id));
+    if (!ids.length) return;
+    const rootId = rootOf(requests, selectedId);
+    if (known.has(rootId)) ids.push(`start-${rootId}`);
     fitView({ nodes: ids.map((id) => ({ id })), padding: 0.35, duration: 300, maxZoom: 1.1 });
   }, [selectedId, requests, fitView, initialized]);
 

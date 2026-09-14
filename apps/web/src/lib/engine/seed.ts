@@ -20,7 +20,7 @@ import { DAY, HOUR } from "./rules";
 const C = "co_1";
 
 /** Bump when the seed changes: persisted demos older than this are re-seeded. */
-export const SEED_VERSION = 4;
+export const SEED_VERSION = 5;
 
 const l = (ar: string, en: string): L => ({ ar, en });
 
