@@ -20,7 +20,7 @@ import { DAY, HOUR } from "./rules";
 const C = "co_1";
 
 /** Bump when the seed changes: persisted demos older than this are re-seeded. */
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 const l = (ar: string, en: string): L => ({ ar, en });
 
@@ -117,7 +117,7 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     r({
       id: "r1", ref: "REQ-1041", projectId: P1, typeId: "t_labor", creatorId: "u6", ownerId: "u7", returnToId: "u6",
       status: "awaiting_subrequests", priority: "urgent",
-      text: l("20 عامل إضافي لصب خرسانة الدور الخامس، الصبة يوم الخميس الصبح", "20 extra workers for the 5th-floor concrete pour, Thursday morning"),
+      text: l("20 عاملاً إضافياً لصب خرسانة الدور الخامس، الصبّ صباح الخميس", "20 extra workers for the 5th-floor concrete pour, Thursday morning"),
       fields: { trade: "عامل عادي", count: 20, days: 3 },
       lines: [{ id: "ln1", description: l("عمال صب", "Pour crew"), unit: l("عامل", "worker"), qtyRequested: 20, qtyDone: 8 }],
       createdAt: ago(26), deadline: inDays(2), seenBy: ["u6", "u2", "u7"],
@@ -125,13 +125,13 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     r({
       id: "r1a", ref: "REQ-1041-1", projectId: P1, typeId: "t_task", parentId: "r1", lineId: "ln1", creatorId: "u7", ownerId: "u8", returnToId: "u7",
       status: "in_progress", priority: "urgent",
-      text: l("12 عامل من المقاول الفرعي الأمانة، أكّد الحضور الأربعاء", "12 workers from Al-Amana subcontractor, confirm attendance for Wednesday"),
+      text: l("12 عاملاً من المقاول الفرعي الأمانة، تأكيد الحضور يوم الأربعاء", "12 workers from Al-Amana subcontractor, confirm attendance for Wednesday"),
       createdAt: ago(22), deadline: inDays(1), seenBy: ["u7", "u8"],
     }),
     r({
       id: "r1b", ref: "REQ-1041-2", projectId: P1, typeId: "t_task", parentId: "r1", lineId: "ln1", creatorId: "u7", ownerId: "u7", returnToId: "u7",
       status: "complete", priority: "urgent",
-      text: l("8 عمال من شركة التوريد المتحدة، اتعاقدنا معاهم", "8 workers from United Supply, contracted"),
+      text: l("8 عمال من شركة التوريد المتحدة، تم التعاقد معهم", "8 workers from United Supply, contracted"),
       createdAt: ago(22), deadline: inDays(1), seenBy: ["u7", "u8"],
     }),
     r({
@@ -149,7 +149,7 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     r({
       id: "r10a", ref: "REQ-1040-1", projectId: P1, typeId: "t_task", parentId: "r10", creatorId: "u9", ownerId: "u6", returnToId: "u9",
       status: "in_progress", priority: "normal",
-      text: l("تأكيد الكميات المنفذة في أغسطس عشان المستخلص", "Confirm the quantities executed in August for the invoice"),
+      text: l("تأكيد الكميات المنفذة في أغسطس لإعداد المستخلص", "Confirm the quantities executed in August for the invoice"),
       createdAt: ago(30), deadline: inDays(1), seenBy: ["u9", "u6"],
     }),
     r({
@@ -161,7 +161,7 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     r({
       id: "r3", ref: "REQ-1038", projectId: P1, typeId: "t_task", creatorId: "u2", ownerId: "u4", returnToId: "u2",
       status: "in_progress", priority: "normal",
-      text: l("تسليم جدول أحمال الكهرباء النهائي لشركة الكهرباء", "Deliver the final electrical load schedule to the utility company"),
+      text: l("تسليم جدول أحمال الكهرباء النهائي إلى شركة الكهرباء", "Deliver the final electrical load schedule to the utility company"),
       createdAt: ago(144), deadline: inDays(-1), escalatedAt: ago(20), seenBy: ["u2", "u4"],
     }),
     r({
@@ -205,7 +205,7 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     r({
       id: "r10", ref: "REQ-1040", projectId: P1, typeId: "t_task", creatorId: "u2", ownerId: "u9", returnToId: "u2",
       status: "awaiting_subrequests", priority: "normal",
-      text: l("إعداد مستخلص شهر أغسطس وإرساله للعميل", "Prepare the August progress invoice and send it to the client"),
+      text: l("إعداد مستخلص شهر أغسطس وإرساله إلى العميل", "Prepare the August progress invoice and send it to the client"),
       createdAt: ago(48), deadline: inDays(2), seenBy: ["u2", "u9"],
     }),
     r({
@@ -235,7 +235,7 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     r({
       id: "r15", ref: "REQ-1047", projectId: P1, typeId: "t_task", creatorId: "u2", ownerId: "u6", returnToId: "u2",
       status: "approved", priority: "normal",
-      text: l("تصوير تقدم الأعمال يومياً ورفعه في قناة المشروع", "Photograph daily progress and post it in the project channel"),
+      text: l("تصوير تقدم الأعمال يومياً ورفعه إلى قناة المشروع", "Photograph daily progress and post it in the project channel"),
       createdAt: ago(2), deadline: inDays(1), seenBy: ["u2"],
     }),
     r({
@@ -260,63 +260,63 @@ export function buildSeed(now = Date.now()): DbSnapshot {
   const audit: AuditEntry[] = [
     // r1: the full scenario
     a("r1", "created", "u6", ago(26)),
-    a("r1", "submitted", "u6", ago(26), "u2", l("الصبة الخميس ومحتاجين العدد يكون موجود الأربعاء", "Pour is Thursday, crew must be on site Wednesday")),
-    a("r1", "approved", "u2", ago(24), "u7", l("معتمد. نسّق مع فهد على التوقيت", "Approved. Coordinate timing with Fahad")),
+    a("r1", "submitted", "u6", ago(26), "u2", l("الصبّ يوم الخميس، ويلزم توفر العدد يوم الأربعاء", "Pour is Thursday, crew must be on site Wednesday")),
+    a("r1", "approved", "u2", ago(24), "u7", l("معتمد. نسّق التوقيت مع فهد", "Approved. Coordinate timing with Fahad")),
     a("r1", "started", "u7", ago(23)),
-    a("r1", "subrequest_created", "u7", ago(22), "u8", l("قسّمتها على مصدرين عشان نضمن العدد", "Split across two sources to guarantee the count")),
+    a("r1", "subrequest_created", "u7", ago(22), "u8", l("قسّمته على مصدرين لضمان العدد", "Split across two sources to guarantee the count")),
     a("r1", "subrequest_created", "u7", ago(22), "u8"),
     a("r1a", "created", "u7", ago(22), "u8"),
     a("r1a", "started", "u8", ago(20)),
     a("r1b", "created", "u7", ago(22), "u8"),
     a("r1b", "started", "u8", ago(20)),
-    a("r1b", "completed", "u8", ago(6), "u7", l("اتعاقدنا مع التوريد المتحدة، 8 عمال من الأربعاء", "Contracted United Supply, 8 workers from Wednesday")),
+    a("r1b", "completed", "u8", ago(6), "u7", l("تم التعاقد مع التوريد المتحدة، 8 عمال ابتداءً من الأربعاء", "Contracted United Supply, 8 workers from Wednesday")),
     a("r1", "progress", "u8", ago(6), null, l("8 من 20", "8 of 20")),
-    a("r1a", "subrequest_created", "u8", ago(21), "u10", l("محتاجين أمر شراء رسمي قبل ما يبدأوا", "They need a formal PO before they start")),
+    a("r1a", "subrequest_created", "u8", ago(21), "u10", l("يلزم أمر شراء رسمي قبل البدء", "They need a formal PO before they start")),
     a("r1a1", "created", "u8", ago(21), "u10"),
     a("r1a1", "started", "u10", ago(19)),
-    a("r1a1", "completed", "u10", ago(10), "u8", l("أمر الشراء رقم PO-2214 اتبعت للأمانة", "PO-2214 sent to Al-Amana")),
+    a("r1a1", "completed", "u10", ago(10), "u8", l("أُرسل أمر الشراء رقم PO-2214 إلى الأمانة", "PO-2214 sent to Al-Amana")),
     a("r1a1", "closed", "u8", ago(9)),
     a("r2", "subrequest_created", "u3", ago(60), "u11"),
     a("r2a", "created", "u3", ago(60), "u11"),
     a("r2a", "started", "u11", ago(58)),
-    a("r2a", "completed", "u11", ago(42), "u3", l("المنسوب مطابق بفرق 2 سم", "Level matches within 2 cm")),
+    a("r2a", "completed", "u11", ago(42), "u3", l("المنسوب مطابق بفارق 2 سم", "Level matches within 2 cm")),
     a("r2a", "closed", "u3", ago(40)),
     a("r2", "subrequest_returned", "u3", ago(40), "u3"),
-    a("r10", "subrequest_created", "u9", ago(30), "u6", l("محتاجة الكميات الفعلية قبل ما أقفل المستخلص", "I need the actual quantities before closing the invoice"), true),
+    a("r10", "subrequest_created", "u9", ago(30), "u6", l("أحتاج الكميات الفعلية قبل إغلاق المستخلص", "I need the actual quantities before closing the invoice"), true),
     a("r10a", "created", "u9", ago(30), "u6"),
     a("r10a", "started", "u6", ago(28)),
     // r2 with one extension
     a("r2", "created", "u2", ago(72), "u3"),
     a("r2", "started", "u3", ago(70)),
-    a("r2", "extended", "u3", ago(30), null, l("الاستشاري تأخر في إرسال النسخة المعدلة", "The consultant sent the revision late")),
+    a("r2", "extended", "u3", ago(30), null, l("تأخر الاستشاري في إرسال النسخة المعدلة", "The consultant sent the revision late")),
     // r3 late + escalated
     a("r3", "created", "u2", ago(144), "u4"),
     a("r3", "started", "u4", ago(140)),
     a("r3", "escalated", "u2", ago(20), "u2", l("تجاوز المهلة", "Deadline exceeded")),
     // r4
-    a("r4", "created", "u3", ago(20), "u11", l("الصبة الخميس، الحديد لازم يكون جاهز قبلها بيوم", "Pour is Thursday, rebar must be ready the day before")),
+    a("r4", "created", "u3", ago(20), "u11", l("الصبّ يوم الخميس، ويجب أن يكون الحديد جاهزاً قبله بيوم", "Pour is Thursday, rebar must be ready the day before")),
     a("r4", "started", "u11", ago(18)),
     // r5 pending approval
     a("r5", "created", "u5", ago(5)),
-    a("r5", "submitted", "u5", ago(5), "u2", l("مرفق عرض سعر الجزيرة، أقل من الميزانية بـ 4%", "Al-Jazeera quotation attached, 4% under budget")),
+    a("r5", "submitted", "u5", ago(5), "u2", l("مرفق عرض سعر الجزيرة، أقل من الميزانية بنسبة 4%", "Al-Jazeera quotation attached, 4% under budget")),
     // r6 complete
     a("r6", "created", "u2", ago(96), "u5"),
     a("r6", "started", "u5", ago(90)),
-    a("r6", "completed", "u5", ago(4), "u2", l("العينات الـ 3 في مكتب الموقع، والعميل شافها وميّال للدرجة الوسطى", "All 3 samples are at the site office; the client leans to the middle shade")),
+    a("r6", "completed", "u5", ago(4), "u2", l("العينات الثلاث في مكتب الموقع، وقد اطلع عليها العميل ويميل إلى الدرجة الوسطى", "All 3 samples are at the site office; the client leans to the middle shade")),
     // r7 clarification loop
     a("r7", "created", "u6", ago(30)),
     a("r7", "submitted", "u6", ago(30), "u2"),
-    a("r7", "clarification_requested", "u2", ago(26), "u6", l("محتاج تاريخ الإغلاق المتوقع والمدة بالساعات", "Need the expected closure date and the duration in hours")),
+    a("r7", "clarification_requested", "u2", ago(26), "u6", l("يلزم تحديد تاريخ الإغلاق المتوقع والمدة بالساعات", "Need the expected closure date and the duration in hours")),
     // r8 closed history
     a("r8", "created", "u4", ago(288), "u12"),
     a("r8", "started", "u12", ago(280)),
-    a("r8", "completed", "u12", ago(200), "u4", l("اللوحات الـ 4 سليمة، تقرير الفحص مرفق", "All 4 boards passed, inspection report attached")),
+    a("r8", "completed", "u12", ago(200), "u4", l("اللوحات الأربع سليمة، وتقرير الفحص مرفق", "All 4 boards passed, inspection report attached")),
     a("r8", "closed", "u4", ago(192)),
     // r9 up the tree
-    a("r9", "created", "u3", ago(8), "u2", l("حسب خطاب الاستشاري رقم 118", "Per consultant letter no. 118")),
+    a("r9", "created", "u3", ago(8), "u2", l("وفق خطاب الاستشاري رقم 118", "Per consultant letter no. 118")),
     a("r9", "started", "u2", ago(6)),
     // r10 cross-branch
-    a("r10", "created", "u2", ago(48), "u9", l("المستخلص لازم يوصل العميل قبل 5 الشهر", "Invoice must reach the client before the 5th"), true),
+    a("r10", "created", "u2", ago(48), "u9", l("يجب أن يصل المستخلص إلى العميل قبل 5 من الشهر", "Invoice must reach the client before the 5th"), true),
     a("r10", "started", "u9", ago(44)),
     // r11
     a("r11", "created", "u1", ago(70), "u2"),
@@ -324,7 +324,7 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     // r12 rejected
     a("r12", "created", "u6", ago(168)),
     a("r12", "submitted", "u6", ago(168), "u2"),
-    a("r12", "rejected", "u2", ago(150), "u6", l("الرافعة الحالية هتغطي الواجهة الشرقية بعد نقلها الأسبوع الجاي", "The current crane covers the east façade after next week's relocation")),
+    a("r12", "rejected", "u2", ago(150), "u6", l("الرافعة الحالية ستغطي الواجهة الشرقية بعد نقلها الأسبوع القادم", "The current crane covers the east façade after next week's relocation")),
     // r13 closed with a transfer in the path
     a("r13", "created", "u2", ago(360), "u9", l("نورة، اطلبي التسعير من الموردين المعتمدين", "Noura, request quotes from the approved suppliers")),
     a("r13", "transferred", "u9", ago(340), "u10", l("التسعير من اختصاص المشتريات", "Quoting is procurement's job"), true),
@@ -338,11 +338,11 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     a("r15", "created", "u2", ago(2), "u6"),
     // r16 cancelled
     a("r16", "created", "u5", ago(216), "u10"),
-    a("r16", "cancelled", "u5", ago(190), null, l("اتشمل ضمن طلب الدهانات الرئيسي", "Folded into the main paint order")),
+    a("r16", "cancelled", "u5", ago(190), null, l("أُدرج ضمن طلب الدهانات الرئيسي", "Folded into the main paint order")),
   ];
 
   const deadlineLogs: DeadlineLog[] = [
-    { id: "dl1", requestId: "r2", seq: 1, from: inDays(-1), to: inDays(2), reason: l("الاستشاري تأخر في إرسال النسخة المعدلة", "The consultant sent the revision late"), actorId: "u3", at: ago(30) },
+    { id: "dl1", requestId: "r2", seq: 1, from: inDays(-1), to: inDays(2), reason: l("تأخر الاستشاري في إرسال النسخة المعدلة", "The consultant sent the revision late"), actorId: "u3", at: ago(30) },
   ];
 
   let mid = 0;
@@ -351,19 +351,19 @@ export function buildSeed(now = Date.now()): DbSnapshot {
   });
 
   const messages: Message[] = [
-    m(P1, null, "u6", ago(28), "الصبة بتاعة الدور الخامس اتأكدت الخميس الصبح", "5th-floor pour confirmed for Thursday morning"),
-    m(P1, null, "u2", ago(27.5), "تمام. العدد الحالي كفاية؟", "Good. Is the current crew enough?"),
-    m(P1, null, "u6", ago(27), "لأ، محتاجين 20 عامل زيادة", "No, we need 20 more workers", "r1"),
-    m(P1, null, "u3", ago(21), "حديد الأعمدة هيكون جاهز الأربعاء بالليل", "Column rebar will be ready Wednesday night"),
-    m(P1, null, "u4", ago(19), "شركة الكهرباء طلبت نسخة إضافية من جدول الأحمال بختم الاستشاري", "The utility asked for an extra copy of the load schedule stamped by the consultant"),
-    m(P1, null, "u2", ago(18.5), "محمد، ده متأخر أسبوع. محتاج موعد نهائي", "Mohamed, that's a week late. I need a final date"),
-    m(P1, null, "u5", ago(6), "العميل شاف عينات الدهان وميّال للدرجة الوسطى", "The client saw the paint samples and leans to the middle shade"),
-    m(P1, null, "u9", ago(3), "مستخلص أغسطس هيتقفل بكرة إن شاء الله", "The August invoice closes tomorrow"),
-    m(P1, "r1", "u7", ago(22.5), "فهد، قسّمتها على مصدرين عشان نضمن العدد", "Fahad, I split it across two sources to guarantee the count"),
-    m(P1, "r1", "u6", ago(22), "تمام، المهم يكونوا موجودين الأربعاء الساعة 7", "Fine, as long as they're on site Wednesday at 7"),
-    m(P1, "r1", "u8", ago(6), "التوريد المتحدة أكدوا 8. الأمانة لسه بيأكدوا الـ 12", "United Supply confirmed 8. Al-Amana is still confirming the 12"),
-    m(P1, "r3", "u4", ago(21), "الاستشاري رجّع الجدول بملاحظتين، هخلصهم النهارده", "The consultant returned the schedule with 2 comments, finishing today"),
-    m(P1, "r3", "u2", ago(20.5), "تمام، بس المهلة عدّت. اطلب تمديد بسبب واضح", "OK, but the deadline passed. Request an extension with a clear reason"),
+    m(P1, null, "u6", ago(28), "تأكد موعد صبّ الدور الخامس: صباح الخميس", "5th-floor pour confirmed for Thursday morning"),
+    m(P1, null, "u2", ago(27.5), "حسناً. هل العدد الحالي كافٍ؟", "Good. Is the current crew enough?"),
+    m(P1, null, "u6", ago(27), "لا، نحتاج 20 عاملاً إضافياً", "No, we need 20 more workers", "r1"),
+    m(P1, null, "u3", ago(21), "حديد الأعمدة سيكون جاهزاً مساء الأربعاء", "Column rebar will be ready Wednesday night"),
+    m(P1, null, "u4", ago(19), "طلبت شركة الكهرباء نسخة إضافية من جدول الأحمال بختم الاستشاري", "The utility asked for an extra copy of the load schedule stamped by the consultant"),
+    m(P1, null, "u2", ago(18.5), "محمد، هذا متأخر أسبوعاً. أحتاج موعداً نهائياً", "Mohamed, that's a week late. I need a final date"),
+    m(P1, null, "u5", ago(6), "اطلع العميل على عينات الدهان ويميل إلى الدرجة الوسطى", "The client saw the paint samples and leans to the middle shade"),
+    m(P1, null, "u9", ago(3), "يُغلق مستخلص أغسطس غداً بإذن الله", "The August invoice closes tomorrow"),
+    m(P1, "r1", "u7", ago(22.5), "فهد، قسّمته على مصدرين لضمان العدد", "Fahad, I split it across two sources to guarantee the count"),
+    m(P1, "r1", "u6", ago(22), "حسناً، المهم أن يكونوا في الموقع الأربعاء الساعة 7", "Fine, as long as they're on site Wednesday at 7"),
+    m(P1, "r1", "u8", ago(6), "أكدت التوريد المتحدة 8 عمال. الأمانة لم تؤكد الـ 12 بعد", "United Supply confirmed 8. Al-Amana is still confirming the 12"),
+    m(P1, "r3", "u4", ago(21), "أعاد الاستشاري الجدول بملاحظتين، سأنهيهما اليوم", "The consultant returned the schedule with 2 comments, finishing today"),
+    m(P1, "r3", "u2", ago(20.5), "حسناً، لكن المهلة انتهت. اطلب تمديداً بسبب واضح", "OK, but the deadline passed. Request an extension with a clear reason"),
   ];
 
   let nid = 0;
@@ -372,26 +372,26 @@ export function buildSeed(now = Date.now()): DbSnapshot {
   });
 
   const notifications: Notification[] = [
-    n("u2", "direct", "new_request", "r5", ago(5), "خالد النجار بيطلب اعتماد: بلاط بورسلين 600×600", "Khaled Al-Najjar requests approval: 600×600 porcelain tiles"),
-    n("u2", "direct", "new_request", "r9", ago(8), "سارة العتيبي بعتتلك طلب: اعتماد زيادة سماكة بلاطة السطح", "Sara Al-Otaibi sent you: approve the roof slab thickness increase"),
-    n("u2", "escalation", "escalated", "r3", ago(20), "متأخر يوم: جدول أحمال الكهرباء عند محمد حسن", "1 day late: electrical load schedule with Mohamed Hassan"),
-    n("u2", "direct", "returned", "r6", ago(4), "خالد النجار خلّص: عينات الدهانات الخارجية. للمراجعة والإغلاق", "Khaled Al-Najjar completed: exterior paint samples. Review and close"),
-    n("u2", "digest", "digest", null, ago(1), "ملخص فرعك: 9 طلبات مفتوحة، 1 متأخر، 2 خلصوا النهاردة", "Your branch: 9 open, 1 late, 2 completed today"),
-    n("u3", "direct", "new_request", "r2", ago(72), "أحمد الراشد بعتلك: مراجعة مخططات الأساسات المعدلة", "Ahmed Al-Rashed sent you: review the revised foundation drawings", true),
-    n("u3", "digest", "digest", null, ago(1), "ملخص فرعك: حسن علي شغال على حديد الأعمدة، المهلة بكرة", "Your branch: Hassan Ali is on the column rebar, due tomorrow"),
-    n("u4", "direct", "overdue", "r3", ago(24), "عدّت المهلة: جدول أحمال الكهرباء النهائي", "Deadline passed: final electrical load schedule"),
-    n("u4", "direct", "deadline_soon", "r3", ago(48), "المهلة بكرة: جدول أحمال الكهرباء النهائي", "Due tomorrow: final electrical load schedule", true),
-    n("u6", "direct", "clarification", "r7", ago(26), "أحمد الراشد طلب توضيح على: تصريح إغلاق الشارع الجانبي", "Ahmed Al-Rashed asked for clarification on: side street closure permit"),
-    n("u6", "direct", "approved", "r1", ago(24), "اتعتمد طلبك: 20 عامل إضافي. راح لقسم العمالة", "Your request was approved: 20 extra workers. Routed to Labor", true),
-    n("u6", "direct", "new_request", "r15", ago(2), "أحمد الراشد بعتلك: تصوير تقدم الأعمال يومياً", "Ahmed Al-Rashed sent you: photograph daily progress"),
-    n("u7", "direct", "new_request", "r1", ago(24), "طلب معتمد وصلك: 20 عامل إضافي لصب الدور الخامس (عاجل)", "Approved request arrived: 20 extra workers for the 5th-floor pour (urgent)", true),
-    n("u7", "direct", "subrequest_returned", "r1b", ago(6), "يوسف عمر خلّص: 8 عمال من التوريد المتحدة. للمراجعة والإغلاق", "Youssef Omar completed: 8 workers from United Supply. Review and close"),
-    n("u8", "direct", "new_request", "r1a", ago(22), "عبدالله القحطاني بعتلك: 12 عامل من المقاول الفرعي (عاجل)", "Abdullah Al-Qahtani sent you: 12 workers from the subcontractor (urgent)", true),
-    n("u11", "direct", "new_request", "r4", ago(20), "سارة العتيبي بعتتلك: تجهيز حديد أعمدة الدور الخامس (عاجل)", "Sara Al-Otaibi sent you: prepare 5th-floor column rebar (urgent)", true),
-    n("u9", "direct", "new_request", "r10", ago(48), "أحمد الراشد بعتلك: إعداد مستخلص شهر أغسطس", "Ahmed Al-Rashed sent you: prepare the August invoice", true),
-    n("u1", "digest", "digest", null, ago(1), "الشركة: 12 طلب مفتوح في مشروعين، 1 متأخر ومصعّد، 0 بانتظار اعتمادك", "Company: 12 open requests across 2 projects, 1 late and escalated, 0 awaiting you"),
-    n("u1", "escalation", "escalated", "r3", ago(20), "تصعيد: جدول أحمال الكهرباء متأخر يوم عند محمد حسن", "Escalation: electrical load schedule 1 day late with Mohamed Hassan", true),
-    n("u5", "direct", "new_request", "r6", ago(96), "أحمد الراشد بعتلك: عينات الدهانات الخارجية", "Ahmed Al-Rashed sent you: exterior paint samples", true),
+    n("u2", "direct", "new_request", "r5", ago(5), "خالد النجار يطلب اعتماد: بلاط بورسلين 600×600", "Khaled Al-Najjar requests approval: 600×600 porcelain tiles"),
+    n("u2", "direct", "new_request", "r9", ago(8), "سارة العتيبي أرسلت إليك: اعتماد زيادة سماكة بلاطة السطح", "Sara Al-Otaibi sent you: approve the roof slab thickness increase"),
+    n("u2", "escalation", "escalated", "r3", ago(20), "متأخر يوماً: جدول أحمال الكهرباء لدى محمد حسن", "1 day late: electrical load schedule with Mohamed Hassan"),
+    n("u2", "direct", "returned", "r6", ago(4), "خالد النجار أنجز: عينات الدهانات الخارجية. للمراجعة والإغلاق", "Khaled Al-Najjar completed: exterior paint samples. Review and close"),
+    n("u2", "digest", "digest", null, ago(1), "ملخص فرعك: 9 طلبات مفتوحة، 1 متأخر، 2 أُنجزا اليوم", "Your branch: 9 open, 1 late, 2 completed today"),
+    n("u3", "direct", "new_request", "r2", ago(72), "أحمد الراشد أرسل إليك: مراجعة مخططات الأساسات المعدلة", "Ahmed Al-Rashed sent you: review the revised foundation drawings", true),
+    n("u3", "digest", "digest", null, ago(1), "ملخص فرعك: حسن علي يعمل على حديد الأعمدة، والمهلة غداً", "Your branch: Hassan Ali is on the column rebar, due tomorrow"),
+    n("u4", "direct", "overdue", "r3", ago(24), "انتهت المهلة: جدول أحمال الكهرباء النهائي", "Deadline passed: final electrical load schedule"),
+    n("u4", "direct", "deadline_soon", "r3", ago(48), "المهلة غداً: جدول أحمال الكهرباء النهائي", "Due tomorrow: final electrical load schedule", true),
+    n("u6", "direct", "clarification", "r7", ago(26), "أحمد الراشد طلب توضيحاً على: تصريح إغلاق الشارع الجانبي", "Ahmed Al-Rashed asked for clarification on: side street closure permit"),
+    n("u6", "direct", "approved", "r1", ago(24), "اعتُمد طلبك: 20 عاملاً إضافياً. وُجّه إلى قسم العمالة", "Your request was approved: 20 extra workers. Routed to Labor", true),
+    n("u6", "direct", "new_request", "r15", ago(2), "أحمد الراشد أرسل إليك: تصوير تقدم الأعمال يومياً", "Ahmed Al-Rashed sent you: photograph daily progress"),
+    n("u7", "direct", "new_request", "r1", ago(24), "وصلك طلب معتمد: 20 عاملاً إضافياً لصب الدور الخامس (عاجل)", "Approved request arrived: 20 extra workers for the 5th-floor pour (urgent)", true),
+    n("u7", "direct", "subrequest_returned", "r1b", ago(6), "يوسف عمر أنجز: 8 عمال من التوريد المتحدة. للمراجعة والإغلاق", "Youssef Omar completed: 8 workers from United Supply. Review and close"),
+    n("u8", "direct", "new_request", "r1a", ago(22), "عبدالله القحطاني أرسل إليك: 12 عاملاً من المقاول الفرعي (عاجل)", "Abdullah Al-Qahtani sent you: 12 workers from the subcontractor (urgent)", true),
+    n("u11", "direct", "new_request", "r4", ago(20), "سارة العتيبي أرسلت إليك: تجهيز حديد أعمدة الدور الخامس (عاجل)", "Sara Al-Otaibi sent you: prepare 5th-floor column rebar (urgent)", true),
+    n("u9", "direct", "new_request", "r10", ago(48), "أحمد الراشد أرسل إليك: إعداد مستخلص شهر أغسطس", "Ahmed Al-Rashed sent you: prepare the August invoice", true),
+    n("u1", "digest", "digest", null, ago(1), "الشركة: 12 طلباً مفتوحاً في مشروعين، 1 متأخر ومصعّد، 0 بانتظار اعتمادك", "Company: 12 open requests across 2 projects, 1 late and escalated, 0 awaiting you"),
+    n("u1", "escalation", "escalated", "r3", ago(20), "تصعيد: جدول أحمال الكهرباء متأخر يوماً لدى محمد حسن", "Escalation: electrical load schedule 1 day late with Mohamed Hassan", true),
+    n("u5", "direct", "new_request", "r6", ago(96), "أحمد الراشد أرسل إليك: عينات الدهانات الخارجية", "Ahmed Al-Rashed sent you: exterior paint samples", true),
   ];
 
   return {

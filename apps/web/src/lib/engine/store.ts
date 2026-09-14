@@ -247,7 +247,7 @@ export const useEngine = create<EngineState>()(
           patch(db, parentId, { status: "in_progress", ownerId: parent.returnToId });
           audit(db, parentId, "subrequest_returned", actorId, parent.returnToId, "");
           notify(db, parent.returnToId, "direct", "subrequest_returned", parentId, {
-            ar: `كل الطلبات الفرعية خلصت ورجعتلك: ${parent.text.ar}`,
+            ar: `أُغلقت كل الطلبات الفرعية وعاد إليك: ${parent.text.ar}`,
             en: `All sub-requests are closed and back with you: ${parent.text.en}`,
           });
         }
@@ -263,14 +263,14 @@ export const useEngine = create<EngineState>()(
         patch(db, r.id, { escalatedAt: at });
         audit(db, r.id, "escalated", r.ownerId, target, "");
         const text: L = {
-          ar: `متأخر: ${r.text.ar} عند ${nameOf(db, r.ownerId).ar}`,
+          ar: `متأخر: ${r.text.ar} لدى ${nameOf(db, r.ownerId).ar}`,
           en: `Late: ${r.text.en} with ${nameOf(db, r.ownerId).en}`,
         };
         if (target) notify(db, target, "escalation", "escalated", r.id, text);
         if (project && project.managerId !== target)
           notify(db, project.managerId, "escalation", "escalated", r.id, text);
         notify(db, r.ownerId, "direct", "overdue", r.id, {
-          ar: `عدّت المهلة: ${r.text.ar}`,
+          ar: `انتهت المهلة: ${r.text.ar}`,
           en: `Deadline passed: ${r.text.en}`,
         });
       };
@@ -361,12 +361,12 @@ export const useEngine = create<EngineState>()(
             if (needsApproval) {
               audit(db, id, "submitted", me, approverId, "");
               notify(db, approverId, "direct", "new_request", id, {
-                ar: `${creator.name.ar} بيطلب اعتماد: ${r.text.ar}`,
+                ar: `${creator.name.ar} يطلب اعتماد: ${r.text.ar}`,
                 en: `${creator.name.en} requests approval: ${r.text.en}`,
               });
             } else if (recipient !== me) {
               notify(db, recipient, "direct", "new_request", id, {
-                ar: `${creator.name.ar} بعتلك: ${r.text.ar}${r.priority === "urgent" ? " (عاجل)" : ""}`,
+                ar: `${creator.name.ar} أرسل إليك: ${r.text.ar}${r.priority === "urgent" ? " (عاجل)" : ""}`,
                 en: `${creator.name.en} sent you: ${r.text.en}${r.priority === "urgent" ? " (urgent)" : ""}`,
               });
             }
@@ -402,12 +402,12 @@ export const useEngine = create<EngineState>()(
             patch(db, id, { status: "approved", ownerId: recipient });
             audit(db, id, "approved", me, recipient, note);
             notify(db, r.creatorId, "direct", "approved", id, {
-              ar: `اتعتمد طلبك: ${r.text.ar}. راح لـ ${nameOf(db, recipient).ar}`,
+              ar: `اعتُمد طلبك: ${r.text.ar}. وُجّه إلى ${nameOf(db, recipient).ar}`,
               en: `Your request was approved: ${r.text.en}. Routed to ${nameOf(db, recipient).en}`,
             });
             if (recipient !== r.creatorId)
               notify(db, recipient, "direct", "new_request", id, {
-                ar: `طلب معتمد وصلك: ${r.text.ar}`,
+                ar: `وصلك طلب معتمد: ${r.text.ar}`,
                 en: `Approved request arrived: ${r.text.en}`,
               });
           }),
@@ -420,7 +420,7 @@ export const useEngine = create<EngineState>()(
             patch(db, id, { status: "rejected", closedAt: nowIso() });
             audit(db, id, "rejected", me, r.creatorId, note);
             notify(db, r.creatorId, "direct", "rejected", id, {
-              ar: `اترفض طلبك: ${r.text.ar}`,
+              ar: `رُفض طلبك: ${r.text.ar}`,
               en: `Your request was rejected: ${r.text.en}`,
             });
           }),
@@ -433,7 +433,7 @@ export const useEngine = create<EngineState>()(
             patch(db, id, { status: "pending_clarification", ownerId: r.creatorId });
             audit(db, id, "clarification_requested", me, r.creatorId, note);
             notify(db, r.creatorId, "direct", "clarification", id, {
-              ar: `${nameOf(db, me).ar} طلب توضيح على: ${r.text.ar}`,
+              ar: `${nameOf(db, me).ar} طلب توضيحاً على: ${r.text.ar}`,
               en: `${nameOf(db, me).en} asked for clarification on: ${r.text.en}`,
             });
           }),
@@ -447,7 +447,7 @@ export const useEngine = create<EngineState>()(
             patch(db, id, { status: "pending_approval", ownerId: project.managerId });
             audit(db, id, "clarified", me, project.managerId, note);
             notify(db, project.managerId, "direct", "new_request", id, {
-              ar: `${nameOf(db, me).ar} رد على طلب التوضيح: ${r.text.ar}`,
+              ar: `${nameOf(db, me).ar} ردّ على طلب التوضيح: ${r.text.ar}`,
               en: `${nameOf(db, me).en} answered the clarification: ${r.text.en}`,
             });
           }),
@@ -467,7 +467,7 @@ export const useEngine = create<EngineState>()(
             audit(db, id, "completed", me, r.returnToId, note);
             if (r.returnToId !== me)
               notify(db, r.returnToId, "direct", "returned", id, {
-                ar: `${nameOf(db, me).ar} خلّص: ${r.text.ar}. للمراجعة والإغلاق`,
+                ar: `${nameOf(db, me).ar} أنجز: ${r.text.ar}. للمراجعة والإغلاق`,
                 en: `${nameOf(db, me).en} completed: ${r.text.en}. Review and close`,
               });
           }),
@@ -492,7 +492,7 @@ export const useEngine = create<EngineState>()(
             patch(db, id, { status: "in_progress", ownerId: backTo });
             audit(db, id, "reopened", me, backTo, note);
             notify(db, backTo, "direct", "returned", id, {
-              ar: `${nameOf(db, me).ar} رجّعلك الطلب: ${r.text.ar}`,
+              ar: `${nameOf(db, me).ar} أعاد إليك الطلب: ${r.text.ar}`,
               en: `${nameOf(db, me).en} sent the request back: ${r.text.en}`,
             });
           }),
@@ -511,7 +511,7 @@ export const useEngine = create<EngineState>()(
             }
             if (r.ownerId !== me)
               notify(db, r.ownerId, "direct", "rejected", id, {
-                ar: `اتلغى الطلب: ${r.text.ar}`,
+                ar: `أُلغي الطلب: ${r.text.ar}`,
                 en: `Request cancelled: ${r.text.en}`,
               });
           }),
@@ -525,7 +525,7 @@ export const useEngine = create<EngineState>()(
             patch(db, id, { ownerId: toUserId, status: r.status === "approved" ? "approved" : "in_progress" });
             audit(db, id, "transferred", me, toUserId, note, offPath);
             notify(db, toUserId, "direct", "new_request", id, {
-              ar: `${nameOf(db, me).ar} حوّلك: ${r.text.ar}`,
+              ar: `${nameOf(db, me).ar} حوّل إليك: ${r.text.ar}`,
               en: `${nameOf(db, me).en} transferred to you: ${r.text.en}`,
             });
           }),
@@ -542,7 +542,7 @@ export const useEngine = create<EngineState>()(
             patch(db, id, { ownerId: backTo, status: "in_progress" });
             audit(db, id, "returned", me, backTo, note);
             notify(db, backTo, "direct", "returned", id, {
-              ar: `${nameOf(db, me).ar} رجّعلك: ${r.text.ar}`,
+              ar: `${nameOf(db, me).ar} أعاد إليك: ${r.text.ar}`,
               en: `${nameOf(db, me).en} returned to you: ${r.text.en}`,
             });
           }),
