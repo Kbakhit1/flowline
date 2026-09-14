@@ -20,7 +20,7 @@ import { DAY, HOUR } from "./rules";
 const C = "co_1";
 
 /** Bump when the seed changes: persisted demos older than this are re-seeded. */
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 
 const l = (ar: string, en: string): L => ({ ar, en });
 
@@ -135,6 +135,24 @@ export function buildSeed(now = Date.now()): DbSnapshot {
       createdAt: ago(22), deadline: inDays(1), seenBy: ["u7", "u8"],
     }),
     r({
+      id: "r1a1", ref: "REQ-1041-1-1", projectId: P1, typeId: "t_task", parentId: "r1a", creatorId: "u8", ownerId: "u8", returnToId: "u8",
+      status: "closed", priority: "urgent",
+      text: l("أمر شراء خدمات عمالة للمقاول الفرعي الأمانة", "Purchase order for Al-Amana labor services"),
+      createdAt: ago(21), deadline: inDays(1), closedAt: ago(9), seenBy: ["u8", "u10"],
+    }),
+    r({
+      id: "r2a", ref: "REQ-1042-1", projectId: P1, typeId: "t_task", parentId: "r2", creatorId: "u3", ownerId: "u3", returnToId: "u3",
+      status: "closed", priority: "normal",
+      text: l("قياس منسوب قاع الحفر في الموقع ومقارنته بالمخطط", "Measure the excavation level on site against the drawing"),
+      createdAt: ago(60), deadline: inDays(-1), closedAt: ago(40), seenBy: ["u3", "u11"],
+    }),
+    r({
+      id: "r10a", ref: "REQ-1040-1", projectId: P1, typeId: "t_task", parentId: "r10", creatorId: "u9", ownerId: "u6", returnToId: "u9",
+      status: "in_progress", priority: "normal",
+      text: l("تأكيد الكميات المنفذة في أغسطس عشان المستخلص", "Confirm the quantities executed in August for the invoice"),
+      createdAt: ago(30), deadline: inDays(1), seenBy: ["u9", "u6"],
+    }),
+    r({
       id: "r2", ref: "REQ-1042", projectId: P1, typeId: "t_task", creatorId: "u2", ownerId: "u3", returnToId: "u2",
       status: "in_progress", priority: "normal",
       text: l("مراجعة مخططات الأساسات المعدلة من الاستشاري وإرسال الملاحظات", "Review the consultant's revised foundation drawings and send comments"),
@@ -186,7 +204,7 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     }),
     r({
       id: "r10", ref: "REQ-1040", projectId: P1, typeId: "t_task", creatorId: "u2", ownerId: "u9", returnToId: "u2",
-      status: "in_progress", priority: "normal",
+      status: "awaiting_subrequests", priority: "normal",
       text: l("إعداد مستخلص شهر أغسطس وإرساله للعميل", "Prepare the August progress invoice and send it to the client"),
       createdAt: ago(48), deadline: inDays(2), seenBy: ["u2", "u9"],
     }),
@@ -253,6 +271,20 @@ export function buildSeed(now = Date.now()): DbSnapshot {
     a("r1b", "started", "u8", ago(20)),
     a("r1b", "completed", "u8", ago(6), "u7", l("اتعاقدنا مع التوريد المتحدة، 8 عمال من الأربعاء", "Contracted United Supply, 8 workers from Wednesday")),
     a("r1", "progress", "u8", ago(6), null, l("8 من 20", "8 of 20")),
+    a("r1a", "subrequest_created", "u8", ago(21), "u10", l("محتاجين أمر شراء رسمي قبل ما يبدأوا", "They need a formal PO before they start")),
+    a("r1a1", "created", "u8", ago(21), "u10"),
+    a("r1a1", "started", "u10", ago(19)),
+    a("r1a1", "completed", "u10", ago(10), "u8", l("أمر الشراء رقم PO-2214 اتبعت للأمانة", "PO-2214 sent to Al-Amana")),
+    a("r1a1", "closed", "u8", ago(9)),
+    a("r2", "subrequest_created", "u3", ago(60), "u11"),
+    a("r2a", "created", "u3", ago(60), "u11"),
+    a("r2a", "started", "u11", ago(58)),
+    a("r2a", "completed", "u11", ago(42), "u3", l("المنسوب مطابق بفرق 2 سم", "Level matches within 2 cm")),
+    a("r2a", "closed", "u3", ago(40)),
+    a("r2", "subrequest_returned", "u3", ago(40), "u3"),
+    a("r10", "subrequest_created", "u9", ago(30), "u6", l("محتاجة الكميات الفعلية قبل ما أقفل المستخلص", "I need the actual quantities before closing the invoice"), true),
+    a("r10a", "created", "u9", ago(30), "u6"),
+    a("r10a", "started", "u6", ago(28)),
     // r2 with one extension
     a("r2", "created", "u2", ago(72), "u3"),
     a("r2", "started", "u3", ago(70)),

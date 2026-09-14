@@ -8,10 +8,13 @@ import { useEngine, selectMe } from "@/lib/engine/store";
 import { useIsDesktop, useNow } from "@/lib/engine/hooks";
 import { directReports, isLate, isOpen, sortInbox, subtreeIds } from "@/lib/engine/rules";
 import { useT, useFmt } from "@/lib/i18n";
-import { Empty, PersonAvatar, SectionTitle } from "@/components/common";
+import { Empty, PersonAvatar, SectionTitle, Segmented } from "@/components/common";
 import { BubbleCard } from "@/components/bubbles/bubble-card";
 import { Button } from "@/components/ui/button";
 import { OrgTree, type PersonStats } from "@/components/tree/org-tree";
+import { FlowCanvas } from "@/components/tree/flow-canvas";
+
+type View = "people" | "lines";
 
 export default function TreePage() {
   const { t, tl } = useT();
@@ -27,6 +30,15 @@ export default function TreePage() {
   const selectedId = useEngine((s) => s.session.treeFocusId);
   const setSelected = useEngine((s) => s.setTreeFocus);
   const setComposer = useEngine((s) => s.setComposer);
+  const openRequest = useEngine((s) => s.openRequest);
+  const [view, setView] = useState<View>("people");
+  const [flowSel, setFlowSel] = useState<string | null>(null);
+  const [onlyOpen, setOnlyOpen] = useState(false);
+
+  const flowRequests = useMemo(
+    () => requests.filter((r) => r.projectId === projectId && (!onlyOpen || isOpen(r.status))),
+    [requests, projectId, onlyOpen],
+  );
 
   const inProject = useMemo(() => requests.filter((r) => r.projectId === projectId && isOpen(r.status)), [requests, projectId]);
   const stats = useMemo(() => {
@@ -93,19 +105,65 @@ export default function TreePage() {
     </div>
   );
 
+  const toggle = (
+    <Segmented
+      value={view}
+      onChange={setView}
+      options={[
+        { value: "people", label: t.tree.people },
+        { value: "lines", label: t.tree.lines },
+      ]}
+    />
+  );
+
+  if (view === "lines") {
+    return (
+      <div className="relative flex h-[calc(100dvh-3.5rem-4rem)] min-h-0 flex-col md:h-[calc(100dvh-3.5rem)]">
+        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
+          {toggle}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-muted-foreground">{t.flow.subtitle}</p>
+            <p className="hidden truncate text-[11px] text-muted-foreground/80 sm:block">{t.flow.hint}</p>
+          </div>
+          <Segmented
+            value={onlyOpen ? "open" : "all"}
+            onChange={(v) => setOnlyOpen(v === "open")}
+            options={[
+              { value: "all", label: t.flow.all },
+              { value: "open", label: t.flow.onlyOpen },
+            ]}
+          />
+        </div>
+        <div className="relative min-h-0 flex-1">
+          {flowRequests.length === 0 ? (
+            <div className="p-4"><Empty>{t.flow.empty}</Empty></div>
+          ) : (
+            <FlowCanvas requests={flowRequests} now={now} selectedId={flowSel} onSelect={setFlowSel} onOpen={openRequest} />
+          )}
+          <div className="pointer-events-none absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full bg-card/90 px-3 py-1.5 text-[10px] text-muted-foreground ring-1 ring-foreground/10 backdrop-blur">
+            <span className="inline-flex items-center gap-1"><span className="inline-block h-0.5 w-5 bg-primary" />{t.flow.legendGo}</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block h-0 w-5 border-t-2 border-dashed border-stage-done" />{t.flow.legendBack}</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block h-0 w-5 border-t-2 border-dotted border-foreground/40" />{t.flow.legendPending}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!desktop) {
-    return <TreeMobile users={users} stats={stats} selected={selected} setSelected={setSelected} panel={panel} />;
+    return <TreeMobile users={users} stats={stats} selected={selected} setSelected={setSelected} panel={panel} toggle={toggle} />;
   }
 
   return (
     <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0">
       <div className="relative min-w-0 flex-1">
-        <div className="pointer-events-none absolute top-3 start-3 z-10">
-          <h1 className="text-lg font-bold">{t.tree.title}</h1>
-          <p className="text-xs text-muted-foreground">
+        <div className="absolute top-3 start-3 z-10">
+          <div className="mb-2">{toggle}</div>
+          <h1 className="pointer-events-none text-lg font-bold">{t.tree.title}</h1>
+          <p className="pointer-events-none text-xs text-muted-foreground">
             {t.tree.subtitle} · {project && tl(project.name)}
           </p>
-          <p className="mt-1 text-[10px] text-muted-foreground">{t.tree.legend}</p>
+          <p className="pointer-events-none mt-1 text-[10px] text-muted-foreground">{t.tree.legend}</p>
         </div>
         <div className="absolute inset-0">
           <OrgTree stats={stats} selectedId={selectedId} onSelect={setSelected} />
@@ -114,7 +172,7 @@ export default function TreePage() {
       {panel ? (
         <aside className="w-[340px] shrink-0 overflow-y-auto border-s p-4 thin-scroll">{panel}</aside>
       ) : (
-        <p className="pointer-events-none absolute bottom-4 start-1/2 -translate-x-1/2 rounded-full bg-card/90 px-3 py-1.5 text-[11px] text-muted-foreground ring-1 ring-foreground/10 backdrop-blur">
+        <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-card/90 px-3 py-1.5 text-[11px] text-muted-foreground ring-1 ring-foreground/10 backdrop-blur">
           {t.tree.showBubbles}
         </p>
       )}
@@ -138,12 +196,14 @@ function TreeMobile({
   selected,
   setSelected,
   panel,
+  toggle,
 }: {
   users: User[];
   stats: Map<string, PersonStats>;
   selected: User | null;
   setSelected: (id: string | null) => void;
   panel: React.ReactNode;
+  toggle: React.ReactNode;
 }) {
   const { t, tl } = useT();
   const { fmtNum } = useFmt();
@@ -155,6 +215,7 @@ function TreeMobile({
 
   return (
     <div className="flex flex-1 flex-col gap-3 px-3 py-3">
+      {toggle}
       <div>
         <h1 className="text-lg font-bold">{t.tree.title}</h1>
         <p className="text-xs text-muted-foreground">{t.tree.mobileHint}</p>
