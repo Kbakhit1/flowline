@@ -26,7 +26,9 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
-      - run: npm ci
+      # npm install (not ci): the lockfile was written on Windows and lacks the linux
+      # optional binaries for lightningcss / tailwind oxide
+      - run: npm install --no-audit --no-fund
       - run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /mirsal
