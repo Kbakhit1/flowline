@@ -185,6 +185,13 @@ function blank(): { db: DbSnapshot; session: Session } {
   };
 }
 
+/**
+ * Set while a tab adopts another tab's save. The copy must not be written back: with two tabs
+ * (split screen, or the demo open twice) every write-back is a new storage event for the other
+ * tab, and the two ping-pong through every intermediate snapshot forever (the screen "shakes").
+ */
+let adopting = false;
+
 export const useEngine = create<EngineState>()(
   persist(
     (set, get) => {
@@ -300,7 +307,18 @@ export const useEngine = create<EngineState>()(
         hydrated: false,
         pinnedUserId: null,
         pinUser: (id) => set({ pinnedUserId: id }),
-        adoptDb: (db) => set({ db }),
+        adoptDb: (db) => {
+          adopting = true;
+          try {
+            set((s) => {
+              // keep our own session, but follow the other tab into a project we do not have yet
+              const pid = db.projects.some((p) => p.id === s.session.projectId) ? s.session.projectId : (db.projects[0]?.id ?? "");
+              return pid === s.session.projectId ? { db } : { db, session: { ...s.session, projectId: pid } };
+            });
+          } finally {
+            adopting = false;
+          }
+        },
 
         /* ---------- session ---------- */
         setCurrentUser: (id) =>
@@ -792,7 +810,16 @@ export const useEngine = create<EngineState>()(
       version: SEED_VERSION,
       // an older seed on the device is simply replaced
       migrate: () => fresh() as unknown as EngineState,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        const ls = localStorage; // throws on the server, which persist tolerates
+        return {
+          getItem: (k) => ls.getItem(k),
+          setItem: (k, v) => {
+            if (!adopting) ls.setItem(k, v);
+          },
+          removeItem: (k) => ls.removeItem(k),
+        };
+      }),
       // transient UI (open sheet, composer draft) is not persisted
       partialize: (s) => ({
         db: s.db,
